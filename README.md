@@ -1,0 +1,2 @@
+# Poptics
+ Optics teaching package
