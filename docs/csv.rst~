@@ -1,0 +1,12 @@
+=======================
+CSV File Read and Write
+=======================
+
+There are two simple CSV file functions to read and write simple CSV of comma deliminated float data direct
+to and from numpy.ndarray. There are:
+
+.. autofunction:: poptics.csvfile.readFile
+
+.. autofunction:: poptics.csvfile.writeFile
+
+		
