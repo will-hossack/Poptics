@@ -8,34 +8,34 @@ and Helium r line by ray tracing
 
 """
 
-import optics.ray as r
-import optics.lens as l
-import optics.wavelength as w
+import poptics.ray as r
+from poptics.lens import Prism
+from poptics.wavelength import MaterialIndex, Mercury_e, Mercury_i, Helium_r
 import matplotlib.pyplot as plt
-import vector as v
+from poptics.vector import Angle
 import math
-import tio as t
+from poptics.tio import tprint
 import numpy as np
 
 def main():
     
     #      Get the materail type and make a prism of default angle, size and location
-    n = w.MaterialIndex()
-    prism = l.Prism(index = n)
-    t.tprint(repr(prism))
+    n = MaterialIndex()
+    prism = Prism(index = n)
+    tprint(repr(prism))
     
     
     #      Get input point on prism and min deviation at Mercury_i line
     pt = prism.getInputPoint()
-    dev = prism.minDeviation(w.Mercury_e)
-    t.tprint("Min deviation : ", math.degrees(dev), " at : ",w.Mercury_e)
-    t.tprint("Max resolutions is ",prism.maxResolution(w.Mercury_e))
-    t.tprint("Resolution with 20 mm diameter beam : ", prism.resolution(10,w.Mercury_e))
+    dev = prism.minDeviation(Mercury_e)
+    tprint("Min deviation : ", math.degrees(dev), " at : ",Mercury_e)
+    tprint("Max resolutions is ",prism.maxResolution(Mercury_e))
+    tprint("Resolution with 20 mm diameter beam : ", prism.resolution(10,Mercury_e))
     
-    u = v.Angle(dev/2)      # Set ray input angle at half min deviation
+    u = Angle(dev/2)      # Set ray input angle at half min deviation
     
     #      Form np array of wavelength and angle
-    wavelengths = np.linspace(w.Mercury_i,w.Helium_r,50)
+    wavelengths = np.linspace(Mercury_i,Helium_r,50)
     angle = np.zeros(wavelengths.size)
     
     #      Go through each wavelength, make a ray and trace it
@@ -43,7 +43,7 @@ def main():
         ray = r.IntensityRay(pt,u,wave)
         ray *= prism
         #      Extract angle of ray in degrees
-        angle[i] = math.degrees(v.Angle(ray.director).theta)
+        angle[i] = math.degrees(Angle(ray.director).theta)
          
     # Do the plotting
     

@@ -7,10 +7,10 @@ Created on Sat May 16 09:28:14 2020
 @author: wjh
 """
 
-from optics.lens import Prism
-from optics.ray import IntensityRay
-from vector import Unit3d,Angle
-import tio as t
+from poptics.lens import Prism
+from poptics.ray import IntensityRay
+from poptics.vector import Unit3d,Angle
+import poptics.tio as t
 import math
 
 def getWavelength(prism, inAngle, outAngle, wavelengths = [0.25,1.0]):

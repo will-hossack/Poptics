@@ -18,6 +18,7 @@ Welcome to Poptics's documentation!
    wavelength
    surface
    ray
+   lens
 
 
 

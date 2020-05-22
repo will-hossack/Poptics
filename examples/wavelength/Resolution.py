@@ -4,9 +4,9 @@ Na Double
 """
 
 
-import optics.wavelength as w
-import tio
-import matplotlib.pyplot as plt
+import poptics.wavelength as w
+import poptics.tio as tio
+
 
 def main():
 

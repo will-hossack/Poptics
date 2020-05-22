@@ -5,14 +5,14 @@
     of wavelengths read from a csv file
 """
 import math
-from optics.lens import Prism
-from optics.wavelength import MaterialIndex,Mercury_e
-from optics.ray import RayPencil
+from poptics.lens import Prism
+from poptics.wavelength import MaterialIndex,Mercury_e
+from poptics.ray import RayPencil
 import numpy as np
 from scipy.special import j1
-import tio as t
+import poptics.tio as t
 import matplotlib.pyplot as plt
-from csvfile import readCSV
+from poptics.csvfile import readCSV
 
 def jinc(x):
     if x == 0.0:
