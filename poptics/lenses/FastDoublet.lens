@@ -1,0 +1,10 @@
+#
+#         F3 Achromatic cemented double from Smith figure 6.4
+#
+title: FastAchromaticDoublet
+point: (0.0,0.0,0.0)
+#
+spherical: 0.0 curve:  0.014433971 radius: 17.0   index:  N-BAK2
+spherical: 7.0 curve: -0.024448084 radius: 17.0   index:  SF2
+spherical: 9.5 curve: -0.007661132775 radius: 17.0 index:  Air 
+#

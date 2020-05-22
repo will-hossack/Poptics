@@ -1,0 +1,15 @@
+#
+#           Kellner Eyepiece from Smith figure 7.5
+#
+title: KellnerEyepiece
+point: (0.0,0.0,0.0)
+#
+circular: 0.0 radius: 26.0
+spherical: 28.2  curve:  2.5975E-3    radius: 28.0   index: F4
+spherical: 34.56 curve:  0.018483     radius: 28.0   index: N-BAK2
+spherical: 74.36 curve: -0.013813     radius: 28.0   index: Air
+spherical: 157.92 curve: 0.011748     radius: 38.0   index: N-BAK2
+spherical: 181.0  curve: 0.0          radius: 38.0   index: Air
+
+
+

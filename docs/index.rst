@@ -15,6 +15,9 @@ Welcome to Poptics's documentation!
    matrix
    csv
    material
+   wavelength
+   surface
+   ray
 
 
 

@@ -1,0 +1,10 @@
+#
+#          F3 Air Doublet from Smith figure 6.5
+#
+title: FastAirDoublet
+point: (0.0,0.0,0.0)
+#
+spherical: 0.0 curve: 0.020912 radius: 17.0  index: N-BK7
+spherical: 7.0 curve: -0.017745 radius: 17.0 index:  air
+spherical: 10.853 curve: -0.021344 radius:  17.0  index: SF1
+spherical: 13.353 curve: -6.2382E-3 radius:  17.0 index:  air
