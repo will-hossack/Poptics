@@ -19,6 +19,11 @@ Welcome to Poptics's documentation!
    surface
    ray
    lens
+   psf
+   wavefront
+   analysis
+   zernike
+   gui
 
 
 
