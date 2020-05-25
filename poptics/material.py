@@ -54,7 +54,8 @@ class MaterialData(object):
         for line in DataBase:
             if not line.startswith("#") or len(line.strip()) == 0:
                 token = line.split()
-                key.append(token[0].strip())     # Key is first token
+                if len(token) != 0:
+                    key.append(token[0].strip())     # Key is first token
         return key
         
     

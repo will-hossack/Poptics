@@ -5,7 +5,7 @@
 
 from poptics.ray import RayPencil, RayPath
 from poptics.surface import CircularAperture, IrisAperture
-from poptics.vector import Angle
+from poptics.vector import Angle,Unit3d
 import matplotlib.pyplot as plt
 
 def main():
@@ -14,7 +14,7 @@ def main():
     ca = CircularAperture(50,20)
     iris = IrisAperture(80,20,0.5)
     #        Forma an angle for the pencil at 10deg up
-    angle = Angle().setDegrees(10,0)
+    angle = Unit3d(Angle().setDegrees(10,0))
     #        Form a pencil is the circular aperture as specified angle of 0.45 microns
     #        and add a RayPath to ech ray
     pencil = RayPencil().addBeam(ca,angle,wavelength = 0.45).addMonitor(RayPath())

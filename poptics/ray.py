@@ -6,6 +6,7 @@ from poptics.vector import Vector3d,Vector2d,Unit3d,Angle
 from poptics.wavelength import Spectrum,AirIndex,WavelengthColour,getDefaultWavelength
 from poptics.matrix import ParaxialMatrix,ParaxialGroup,ParaxialPlane
 from matplotlib.pyplot import plot
+from numpy import linspace
 
 
 
@@ -993,7 +994,7 @@ class RayPencil(list):
         :param ca: circular aperture to filled (any object with maxRadius attribute)
         :type ca: optics.surface.CircularAperture
         :param source: source or rays, either a SourcePoint or angle. 
-        :type source: SourcePoint or vector.Unit3d or vector.Angle or float
+        :type source: SourcePoint or Vectore3d or Unit3d or Angle or float
         :param key: method of fill, allowed keys as "vl", "hl" and "array",(default is "vl")
         :type key: str
         :param nrays: number or rays across radius, (default = 10)
@@ -1015,7 +1016,6 @@ class RayPencil(list):
             ca = ca.entranceAperture()
         pt = ca.getPoint()         # Reference point
         radius = ca.maxRadius
-        dr = radius/(nrays + 0.1)
         
         if isinstance(source,SourcePoint):        # Rays from a source
             s = Vector3d(source)
@@ -1027,114 +1027,41 @@ class RayPencil(list):
             else:
                 u = Unit3d(source)
 
-        jmin = 0                  # Set default to central ray only
-        jmax = 1
-        imin = 0
-        imax = 1
-        #                         Sort out range of ray positions in aperture
-        if key == "vl":           # Vertical 
-            jmin = -nrays
-            jmax = nrays + 1
-        elif key == "hl":         # Horizontal
-            imin = -nrays
-            imax = nrays + 1
-        elif key == "array":      # array
-            jmin = -nrays
-            jmax = nrays + 1
-            imin = jmin
-            imax = jmax
+        rscan = linspace(-radius,radius,2*nrays + 1)   # Point across radius (make sure one in centre)
+        if key.startswith("ar"):
+            xscan = rscan
+            yscan = rscan
+        elif key.startswith("vl"):
+            xscan = [0.0]
+            yscan = rscan
+        elif key.startswith("hl"):
+            xscan = rscan
+            yscan = [0.0]
         else:
-            print("ray.RayPencil.addBeam: illegal key {0:s}".format(str(key)))
+            print("Error")
+        
 
         # Scan through making the rays
-        for j in range(jmin,jmax):
-            for i in range(imin,imax):
-                y = j*dr                                       # x/y in aperture plane  in local coordinates      
-                x = i*dr
+        for y in yscan:
+            for x in xscan:
                 if x*x + y*y <= radius*radius:                 # Ignore if outside radius of aperture
                     p = Vector3d(pt.x + x, pt.y + y, pt.z)     # Point in aperture in global coordinates
-
                     if s:                                      # From source
                          u = Unit3d(p - s)                              
                          ray = IntensityRay(s,u,wavelength,intensity,index)    # Make source ray
                     else:                                      # Collimated beam
-                        dist = radius + x*u.x + y*u.y
+                        dist = float(radius + x*u.x + y*u.y)
                         p -= dist*u                                # Propagate point to make it look nicer
                         ray = IntensityRay(p,u,wavelength,intensity,index)     # Make collimated 
                     if path:
                         ray.pathlength = 0.0
                     self.append(ray)                           # Append to self
 
+
         return self
         
     
-    def addCollimatedBeam(self,ca,u,key = "vl" ,nrays = 10 ,wave = getDefaultWavelength(), intensity = 1.0, index = AirIndex(), path = False):
-        """
-        Method to add a collimated beam of IntensityRays that fills a specified input apeture.
 
-        :param ca: circular aperture to filled (any object with maxRadius attribute)
-        :type ca: optics.surface.CircularAperture
-        :param u: direction of rays (can be Unit3d, Angle or float)
-        :type u: vector.Unit3d or vector.Angle
-        :param key: method of fill, allowed keys as "vl", "hl" and "array",(default is "vl")
-        :type key: str
-        :param nrays: number or rays across radius, (default = 10)
-        :type nrays: int
-        :param wave: the wavelength, (default = Default)
-        :type wave: float
-        :param intensity: the ray intensity, (default = 1.0)
-        :type intensity: float or optics.wavelenth.Spectrum
-        :param path: record pathlength, default = False
-
-        """
-        if not hasattr(ca, "maxRadius"):
-            ca = ca.entranceAperture()
-        pt = ca.getPoint()         # Reference point
-        radius = ca.maxRadius
-        dr = radius/(nrays + 0.1)
-
-        #            Sort out angle (needed internally)
-        if isinstance(u,float) or isinstance(u,int):
-            u = Unit3d(Angle(u))
-        else:
-            u = Unit3d(u)
-
-        
-        jmin = 0                  # Set default to central ray only
-        jmax = 1
-        imin = 0
-        imax = 1
-        
-        if key == "vl":           # Vertical 
-            jmin = -nrays
-            jmax = nrays + 1
-        elif key == "hl":         # Horizontal
-            imin = -nrays
-            imax = nrays + 1
-        elif key == "array":      # array
-            jmin = -nrays
-            jmax = nrays + 1
-            imin = jmin
-            imax = jmax
-        else:
-            print("ray.RayPencil.addCollimatedBeam: illegal key {0:s}".format(str(key)))
-
-
-        # Scan through making the rays
-        for j in range(jmin,jmax):
-            for i in range(imin,imax):
-                y = j*dr                                       # x/y in aperture plane  in local coordinates      
-                x = i*dr
-                if x*x + y*y <= radius*radius:                 # Ignore if outside radius of aperture
-                    p = Vector3d(pt.x + x, pt.y + y, pt.z)     # Point in aperture in global coordinates
-                    dist = radius + x*u.x + y*u.y
-                    p -= dist*u                                # Propagate point to make it look nicer
-                    ray = IntensityRay(p,u,wave,intensity,index)     # Make the ray
-                    if path:
-                        ray.pathlength = 0.0
-                    self.append(ray)                           # Append to self
-        
-        return self
 
 
     def addCollimatedParaxialBeam(self,ca,u,nrays = 10 ,wave = getDefaultWavelength() , intensity = 1.0):
@@ -1156,13 +1083,10 @@ class RayPencil(list):
         else:
             radius = 10.0
         pt = ca.getPoint().z
-        dr = radius/(nrays + 0.1)
+        yscan = linspace(-radius,radius,2*nrays + 1)
 
-        jmin = -nrays
-        jmax = nrays + 1
-
-        for j in range(jmin,jmax):
-            y = j*dr
+        for y in yscan:
+            
             dist = radius + y*u
             ray = ParaxialRay(y,u,pt,wave,intensity)
             ray.propagate(-dist)
@@ -1170,71 +1094,6 @@ class RayPencil(list):
         
         return self
 
-
-    #
-    def addSourceBeam(self, ca, source, key = "vl" ,nrays = 10 ,wave = getDefaultWavelength(), index = AirIndex(),path = False):
-        """
-        Method to add beam from a source point that fills an aperture.
-        
-        :param ca: circular aperture to fill.
-        :type ca: CircularAperture o
-        :param source: The source point, if Vector3d, intensity will default to 1.0.
-        :type source: SourcePoint or Vector3d
-        :param key: method of fill, allowed keys as "vl", "hl" and "array",(default is "vl")
-        :type key: str
-        :param nrays: number or rays aross radius, (Default = 10)
-        :type nrays: int
-        :param wave: the wavelength, (default = Default)
-        :type wave: float
-        :param index: Refrative index (Default = AirIndex())
-        :type index: RefratciveIndex
-
-        """
-        if not hasattr(ca, "maxRadius"):    
-            ca = ca.entranceAperture()
-        pt = ca.getPoint()                # Reference point
-        radius = ca.maxRadius
-        dr = radius/(nrays + 0.1)
-        s = Vector3d(source)              # Local copy of source location
-
-        #            Sort out intensity of source
-        if isinstance(source,SourcePoint):
-            intensity = source.getIntensity(wave)
-        else:
-            intensity = 1.0  
-        
-        jmin = 0                  # Set default to central ray only
-        jmax = 1
-        imin = 0
-        imax = 1
-        
-        if key == "vl":           # Vertical 
-            jmin = -nrays
-            jmax = nrays + 1
-        elif key == "hl":
-            imin = -nrays
-            imax = nrays + 1
-        elif key == "array":
-            jmin = -nrays
-            jmax = nrays + 1
-            imin = jmin
-            imax = jmax
-        else:
-            print("ray.RayPencil.addSourceBeam: illegal key {0:s}".format(str(key)))
-
-        for j in range(jmin,jmax):
-            for i in range(imin,imax):
-                y = j*dr                                          # x/y in local coordinates
-                x = i*dr
-                if x*x + y*y <= radius*radius:
-                    p = Vector3d(pt.x + x, pt.y + y, pt.z)         # Point in aperture in global coordinates
-                    u = Unit3d(p - s)                              # Direction of ray
-                    ray = IntensityRay(s,u,wave,intensity,index)    # Make ray
-                    self.append(ray)                                # Add to pencil
-                    if path:
-                        ray.pathlength = 0.0
-        
-        return self
 
 
     def addSourceParaxialBeam(self,pg, height, sourceplane, nrays = 10 ,wave = getDefaultWavelength(), intensity = 1.0):
@@ -1248,12 +1107,12 @@ class RayPencil(list):
 
         dist = pg.inputPlane() - z
 
-        jmin = -nrays
-        jmax = nrays + 1
-        dy = pg.maxRadius()/(nrays+0.1)
-
-        for j in range(jmin,jmax):
-            y = dy * j                # Height in input aperture
+    
+        radius = pg.maxRadius()
+        
+        
+        yscan = linspace(-radius,radius,2*nrays + 1)
+        for y in yscan:
             u = (y - height)/dist     # Calcualte angle using paraxial approx
             ray = ParaxialRay(height,u,z,wave,intensity)
             self.append(ray)
@@ -1347,10 +1206,6 @@ class RayPencil(list):
             r.draw()
         
                
-
-
-        
-#
 
 class GaussianBeam(Ray):
     """

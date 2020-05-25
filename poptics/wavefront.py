@@ -3,7 +3,6 @@ Set of classes to handle wavefronts, analysis, fitting and interferoneters.
 """
 from poptics.vector import Vector2d,Vector3d,Unit3d,Angle
 import math
-import cmath
 from poptics.surface import OpticalPlane
 from poptics.psf import Psf
 from poptics.wavelength import getDefaultWavelength,getDesignWavelength
@@ -286,7 +285,7 @@ class WavePointSet(list):
         self.zerr = np.sqrt(np.diag(pcov))
 
         #      Return the result as a Zernike Wavefront with unit radius.
-        ze = ZernikeWaveFront(1.0,*popt)
+        ze = ZernikeWaveFront(1.0,None,*popt)
         return ze
 
 
@@ -314,7 +313,7 @@ class WavePointSet(list):
         popt,pcov = curve_fit(self.fitSeidelFunction,self,y)
         self.serr = np.sqrt(np.diag(pcov))    
 
-        se = SeidelWaveFront(1.0,self.wavelength,self.fieldangle,*popt)
+        se = SeidelWaveFront(1.0,self.fieldangle,*popt)
         return se
         
     def leastSqrError(self,zern):
@@ -336,6 +335,9 @@ class WavePointSet(list):
         n = len(self)
 
         return sumSqr/(n*n) - pow(sm/n,2)
+
+
+
 
 
 class WaveFrontAnalysis(object):
@@ -452,26 +454,23 @@ class WaveFrontAnalysis(object):
             angle = Angle(u).theta
         
         wavelength = getDefaultWavelength(wavelength)
-
-        self.ref = self.lens.imagePoint(u,self.design)    # Get image point at design wavelength
-        
+        ref = self.lens.imagePoint(u,self.design)    # Get image point at design wavelength
+        ip = OpticalPlane(ref)                        # Image plane
 
         nrays = 50
         ca = self.lens.entranceAperture()
-        dr = ca.maxRadius/(nrays + 0.1)                   # Ray separation
 
-        
-        rvals = []                # Radius values
+
+        #         Make list for plots
         mvals = []                # Meridional
         svalsx = []               # Sagittal x
         svalsy = []               # Sagittal y
-
+        
+        
         #              Start of loop to make rays
-        for i in range(-nrays,nrays + 1):
-            r = i*dr                           # Radial poition
-            rvals.append(r/ca.maxRadius)       # Record normalsied position
-            #
-            #         Make the m and s rays at test wavelength
+        rscan = np.linspace(-ca.maxRadius,ca.maxRadius,nrays + 1)
+        for r in rscan:
+            # Make two rays
             mray = IntensityRay(ca.point + Vector3d(0.0, r, 0.0), u, wavelength)
             sray = IntensityRay(ca.point + Vector3d(r, 0.0, 0.0), u, wavelength)
         
@@ -479,16 +478,16 @@ class WaveFrontAnalysis(object):
             pencil = RayPencil(mray,sray).propagate(-ca.maxRadius)
             #         propagate through lens to image surafce
             pencil *= self.lens
-            pencil *= self.ip
+            pencil *= ip
 
             #            If rays valid (so not blocked), abberations to list
             if mray:
-                mpos = mray.position - self.ref
+                mpos = mray.position - ref
                 mvals.append(mpos.y)
             else:
                 mvals.append(float("nan"))
             if sray:
-                spos = sray.position - self.ref
+                spos = sray.position - ref
                 svalsx.append(spos.x)
                 svalsy.append(spos.y)
             else:
@@ -498,28 +497,112 @@ class WaveFrontAnalysis(object):
 
         # plots with suitable labels to the current axis.
 
-        plt.plot(rvals,mvals, color = colour[0], label="Meridional")
-        plt.plot(rvals,svalsx,color = colour[1], label="Sagittal x")
-        plt.plot(rvals,svalsy,color = colour[2], label="Sagittal y")
+        plt.plot(rscan,mvals, color = colour[0], label="Meridional")
+        plt.plot(rscan,svalsx,color = colour[1], label="Sagittal x")
+        plt.plot(rscan,svalsy,color = colour[2], label="Sagittal y")
         plt.title("{0:s}: a: {1:4.2f} w: {2:4.2f} d: {3:4.2f}".\
                   format(self.lens.title,math.degrees(angle),wavelength,\
                   self.design))
-        plt.xlim(-1.0,1.0)
         plt.legend(loc=legend,fontsize="small")
         plt.grid()
 
 
 
 
+class CircularMask(object):
+    """
+    The default circular mask that defines the extend of a WaveFront
+    
+    :param radius: the radius of the mask
+    :type radius: float
+    
+    """
+    
+    def __init__(self,radius = 1.0):
+        """
+        Constrcutor with one argument
+        """
+        self.radius = radius
+        self.radSqr = radius*radius    # Make calcualtions faster
+        
+    def __str__(self):
+        """
+        The str() method
+        """
+        return "r : {0:6.f3}".format(self.radius)
+    
+    def ___repr__(self):
+        """
+        The repr method
+        """
+        return "{0:s}: ".format(self.__class__.__name__) + str(self)
+    
+    def inside(self,x,y):
+        """
+        Test if point x/y is inside
+        """
+        return x*x + y*y <= self.radSqr
+            
+        
+class AnnularMask(CircularMask):
+    """
+    An annular mask for inner and outer radi
+    :param radius: the radius of the mask
+    :type radius: float
+    :param inner: inner radius as fraction of outer (Default = 0.0)
+    """
+    def __init__(self,radius = 1.0, inner = 0.0):
+        """     
+            The constrcutor
+        """
+        CircularMask.__init__(self,radius)
+        self.inner = min(abs(inner),1.0)*radius
+        self.inSqr = self.inner**2
+        
+    def __str__(self):
+        """
+        The str() method
+        """
+        return "r : {0:6.f3} i: {0:1.6f}".format(self.radius,self.inner)
+    
+    def inside(self,x,y):
+        """
+        Test if point x/y is inside
+        """
+        r = x*x + y*y
+        return r <= self.radSqr and r >= self.inSqr
+    
+
+def idealOTF(s,maxs):
+        """
+        Function to genererate the ideak OTF 
+        :param s: shift
+        :type s: float of numpy array
+        :return: ideal OTF as float or numpy array
+        """
+        return 2.0/math.pi*(np.arccos(s/maxs) - s/maxs*np.sqrt(1 - (s/maxs)**2))
+
+
 class WaveFront(object):
     """
-    Basic wavefront class, abstract at this point
+    Basic wavefront class, abstract at this point.
+    
+    This is this base class for holding, manipulating and display analytic wavefront.
+    There are also methos to calcualte PSF, OTF 
+    
+    :param radius: radius of wavefront, can be a float or Mask, if float a default circular mask is used
+    :type radius: float or CircularMask
     """
     def __init__(self,radius = 1.0):
         """
-        Constuctor to form WaveFront object, only radius is set here.
+        Constuctor to form WaveFront object, only radius and mask is set here.
         """
-        self.radius = float(radius)
+        if isinstance(radius,float) or isinstance(radius,int):  # Given int / float
+            self.radius = float(radius)                         # Recond radius
+            self.setMask()                                      # make default mask
+        else:                                                   # Given mask
+            self.setMask(radius)
+        
 
     def __str__(self):
         """
@@ -532,7 +615,29 @@ class WaveFront(object):
         Detailed description
         """
         return "{0:s}: ".format(self.__class__.__name__) + str(self)
-
+    
+    def setMask(self,mask = None):
+        """
+        Set the mask 
+        :param mask: the mask, (Default = None) gives Circular mask
+        :type mark: CircularMask or AnnualMask
+        :return: self
+        """
+        if mask == None:
+            self.mask = CircularMask(self.radius)
+        else:
+            self.mask = mask
+            self.radius = self.mask.radius
+        return self
+    
+    
+    def getRadius(self):
+        """
+        Get the radius
+        :return: radius as float
+        """
+        return self.radius
+    
 
     def getValue(self,x,y = None):
         """
@@ -544,19 +649,20 @@ class WaveFront(object):
         :type y: float of None
         :return: the value
         """
-        if isinstance(x,Vector2d): # Unpack vector2d if used
+        if isinstance(x,Vector2d):         # Unpack vector2d if used
             y = x.y
             x = x.x
             
-        x /= self.radius              # Normalise
-        y /= self.radius
-
-        return self._getValue(x,y)    # Call internal method to get the acutal value
-    
+        if self.mask.inside(x,y):         # Check in inside mask
+            x /= self.radius              # Normalise
+            y /= self.radius
+            return self._getValue(x,y)    # Call internal method to get the acutal value
+        else:
+            return float("nan")           # Outside mask, return NaN
     
     def getComplexValue(self,x,y = None):
         """
-        Get the compolex value taking the value as a phase
+        Get the complex value taking the value as a phase
         
         :param x: the x value of Vector2d
         :type x: float or Vector2d
@@ -624,21 +730,37 @@ class WaveFront(object):
         im = np.empty((size,size),dtype = float)      # Make Empty array
             
         xmax,ymax = im.shape
-        ycentre = ymax/2.0
-        xcentre = xmax/2.0
+        ycentre = ymax//2
+        xcentre = xmax//2
 
         for (i,j),v in np.ndenumerate(im):
             y = (j - ycentre)*self.radius/ycentre       # In range -1.0 to 1.0
             x = (i - xcentre)*self.radius/xcentre       # In range -1.0 to 1.0
-            im[i,j] = self.getValue(x,y)                # Will be NaN for outside circle
+            im[i,j] = self.getValue(x,y)                # Will be NaN for outside mask
 
         return im
+    
+    
+    def drawImage(self,size = 256):
+        """
+        Give image as plt.imshow() frame with grey scale. 
 
+        :param size: the size of the image in pixel, (Default = 256)
+        :type size: int
+
+        Not really very iseful appart for testing, it is much better to use the
+        Interferometer class to visualise the wavefront.
+
+        """
+        im = self.getImage(size)
+        plt.imshow(im,cmap=plt.cm.gray,extent=(-self.radius,self.radius,-self.radius,self.radius))
 
 
     def getPSF(self,size = 256, log = True):
         """
-        Get the PSF by fourier means.
+        Get the PSF by fourier means as an image in a two-dimensional numpy array.
+        The log option will give an intensity of np.log(1.0 + psf) which make the low
+        intersity parts much more visible.
 
         :param size: size of PSF array, Default = 256
         :type size: int
@@ -660,14 +782,25 @@ class WaveFront(object):
 
         return psf
 
+    def drawPSF(self,size = 256, log = True):
+        """
+        Plot data is a np.array in extent +/- 1.0
 
-    def plotPSF(self,size = 256, log = True, key = "b"):
+        :param size: the size of the image in pixel, (Default = 256)
+        :type size: int
+
+        """
+        im = self.getPSF(size,log)
+        plt.imshow(im,cmap=plt.cm.gray,extent=(-1.0,1.0,-1.0,1.0))
+
+
+    def plotPSF(self,size = 256, log = False, key = "b"):
         """
         Make plot of the PSF along the x and y axis. Plot to current defaults plt.plot()
       
         :param size: size of plot (Default = 256)
         :type size: int
-        :param log: is log taken before plot, Default = True
+        :param log: is log taken before plot, (Default = False)
         :type log: bool
         :param key: what is plotted, can be "h", "v" or "b" 
         :type key: str
@@ -701,7 +834,8 @@ class WaveFront(object):
         """
         Get the one-dimenensioal normalsied OFT as np array in either horizontal or vertical diection.
 
-        Note: this is calcualted in real space and can be slow for large size (128 gives sensible results).
+        Note: this is calcualted in real space and can be slow for large size 
+        (128 gives sensible results).
 
         :param size: the number of point in the OTF (Default = 128)
         :type size: int
@@ -722,7 +856,7 @@ class WaveFront(object):
         xyRange = np.linspace(-self.radius,self.radius,grid)
         
         #         Local radiusSqr (to reduce calculations)
-        rsqr = self.radius*self.radius
+        #rsqr = self.radius*self.radius
         
         #         Loop over shifts
         for i,s in enumerate(shiftData):
@@ -739,86 +873,23 @@ class WaveFront(object):
                         xs = x + s
                     else:
                         xs = x
-                    #    Check if both points are in aperture
-                    if x*x + y*y < rsqr and xs*xs + ys*ys < rsqr:
-                        # Get the two value for of the wavefront
-                       
+                    ps = self.getValue(xs,ys)
+                    if math.isfinite(ps):
                         p = self.getValue(x,y)
-                        ps = self.getValue(xs,ys)
-                        otf += math.cos(p - ps)      # Form otf
+                        if math.isfinite(p):
+                            otf += math.cos(p - ps)      # Form otf
                        
             otfData[i] = otf        # Hold in otfData array
     
         otfData /= np.max(otfData)     # Normalise to unity 
         
-        return shiftData,otfData
+        return shiftData,otfData       # Return the two arrays
         
         
+    
         
 
-
-    def getOTFold(self,size = 128, key = "h"):
-        """
-        Get the one-dimenensioal normalsied OFT as np array in either horizontal or vertical diection.
-
-        Note: this is calcualted in real space and can be slow for large size (128 gives sensible results).
-
-        :param size: the number of point in the OTF (Default = 128)
-        :type size: int
-        :param key: horizontal or vertical "h" or "v"
-        :type key: str
-
-        """
-        im = self.getImage(size)     # Get the phase image
-        # Make the complex image and it complex conjugate
-        r = np.cos(im)
-        i = np.sin(im)
-        z = r + 1j*i
-        zc = np.conj(z)
-
-        xsize,ysize = im.shape
-
-        horizontal = key.startswith("h")    # Set logicval
-        
-        if horizontal:              # Sort out ditection of shift
-            shiftSize = xsize
-            fullRange = range(0,ysize)
-        else:
-            shiftSize = ysize
-            fullRange = range(0,xsize)
-        
-
-        otfData = np.zeros(shiftSize)  # np array to hold the OFT
-
-        #      Loop over the shifts
-        for shift in range(0,shiftSize): 
-            otf = 0.0
-            shiftRange = range(shift,shiftSize)
-
-            #
-            #       Do 2d sum over overlap area
-            for i in shiftRange:
-                for j in fullRange:
-                    ish = i - shift
-                    if horizontal:
-                        zr = z[i,j]
-                        zl = zc[ish,j]
-                    else:
-                        zr = z[j,i]
-                        zl = zc[j,ish]
-                    if not (cmath.isnan(zr) or cmath.isnan(zl)) :
-                        otf += (zr * zl).real
-            otfData[shift] = otf
-
-        #        Normalise this output
-        max = np.amax(otfData)
-        otfData /= max
-        return otfData    
-        
-
-
-
-    def plotOTF(self,size = 128, key = "h" , ideal = True ):
+    def plotOTF(self,size = 128, key = "h" , ideal = True, grid = 50 ):
         """
         Calcualte and plot OFT with sensible plot paramters. 
         It will plot hotizontal / vertical / both normalsied OTF with optional ideal plot
@@ -829,23 +900,28 @@ class WaveFront(object):
         :type key: str
         :param ideal: plot ideal OTF for reference (Default = True)
         :type ideal: bool
+        :param grid: no of points on inregration grid (Default = 50)
+        :type grid: int
 
         """
 
-
+        #         Do the horizontal plot is requested
         if key.startswith("h") or key.startswith("b") :
-            shiftData,otfData = self.getOTF(size,key = "h")   # Get the OTF
+            shiftData,otfData = self.getOTF(size,key = "h",grid = grid)   # Get the OTF
             plt.plot(shiftData,otfData,label="Horizontal")
+            
+        #        Do the vertical plot if requested    
         if key.startswith("v") or key.startswith("b") :
-            shiftData,otfData = self.getOTF(size,key = "v")   # Get the OTF
+            shiftData,otfData = self.getOTF(size,key = "v", grid = grid)   # Get the OTF
             plt.plot(shiftData,otfData,label="Vertical")
 
         #
-        #       Add ideal for reference
+        #       Add ideal for reference if requested
         if ideal:
             maxs = 2*self.radius
-            idealFn = lambda x: 2.0/math.pi*(np.arccos(x/maxs) - x/maxs*np.sqrt(1 - (x/maxs)**2))
-            plt.plot(shiftData,idealFn(shiftData),"k--",label="Ideal")
+            #idealFn = lambda x: 2.0/math.pi*(np.arccos(x/maxs) - x/maxs*np.sqrt(1 - (x/maxs)**2))
+            
+            plt.plot(shiftData,idealOTF(shiftData,maxs),"k--",label="Ideal")
             
         plt.grid()
         plt.xlabel("Normalised spatial frequency")
@@ -855,17 +931,7 @@ class WaveFront(object):
 
         
 
-    def plotImage(self,size = 256):
-        """
-        Plot data is a np.array in extent +/- 1.0
-
-        :param size: the size of the image in pixel, (Default = 256)
-        :type size: int
-
-        """
-        im = self.getImage(size)
-        plt.imshow(im,cmap=plt.cm.gray,extent=(-1.0,1.0,-1.0,1.0))
-
+   
     
 
     def fromFile(self,fn = None):
@@ -886,7 +952,10 @@ class WaveFront(object):
         rad = self.radius
         type ="zzz"
         theta = 0.0
-        for line in wfile.readlines():
+        lines = wfile.readlines()
+        wfile.close()
+        #           Read through line at a time
+        for line in lines:
             line = line.strip()
             if not line.startswith("#") and len(line) > 0:   # Kill comments and blanks
                 token = line.split()
@@ -900,7 +969,8 @@ class WaveFront(object):
                 else: # Assume a coefficient
                     c = float(token[0])
                     coef.append(c)
-
+        
+        
         #          Work cout what we have
         if type.startswith("seid"):
             return SeidelWaveFront(rad,theta,coef)
@@ -1039,7 +1109,7 @@ class ZernikeWaveFront(WaveFront):
     :type radius: float
     :param \*args: coefficiencs as set of parameters or list, may be blank.
     """
-    def __init__(self,radius = 1.0,*args):
+    def __init__(self,radius = 1.0, *args):
         """
         Form the Zernike class with the coefficients, coefficeints are in microns.
         """
@@ -1055,11 +1125,9 @@ class ZernikeWaveFront(WaveFront):
     def __str__(self):
         """
         Print out list inclduing the component names.
-            """ 
+        """ 
         s =  WaveFront.__str__(self)
-        for i in range(len(self.coef)):
-            s += "\n{0:s} : {1:8.4e}, ".format(opticalZernikeName(i),self.coef[i])
-            
+        s += opticalZernikeName(self.coef)
         return s
 
 
@@ -1090,7 +1158,7 @@ class PolynomialWaveFront(WaveFront):
         """
         Form the Polynomial class with the coefficients, coefficeints are in microns.
         """
-        WaveFront.__init__(self,radius)
+        WaveFront.__init__(self, radius )
         self.coef = []
         for c in args:
             if isinstance(c,list):
@@ -1174,51 +1242,11 @@ class PolynomialWaveFront(WaveFront):
 
 
 
-class ScalarPSF(object):
-    """
-    Class to form the Scalar PSF from a wavefront.
-    """
-
-    def __init__(self,size = 256):
-        """
-        Creat the object of specified size
-        """
-        self.size = int(size)
-        self.image = np.zeros((self.size,self.size),dtype = complex)
-
-    def addWaveFront(self,wf):
-        """
-        Add the wavefront, this will calsulate the ScarPSF and return the image,
-        but will also hold in interallally so that it can be rendered
-        """
-        xr = range(0,self.size)
-
-        for j in xr:
-            y = 2.0*wf.maxradius*(j - self.size/2)/self.size
-            for i in xr:
-                 x = 2.0*wf.maxradius*(i - self.size/2)/self.size
-                 if x*x + y*y <= wf.maxradius*wf.maxradius:
-                     phi =wf.getValue(x,y) 
-                     self.image[i,j] = complex(math.cos(phi),math.sin(phi))
-
-        
-        self.image = np.fft.fft2(self.image)
-        self.image = np.fft.fftshift(self.image)
-        self.image = np.absolute(self.image)
-        return self.image
-
-    def draw(self):
-        """
-        Render the ScalaSPF using imshow with grayscale colour map
-        """
-        plt.imshow(self.image,cmap=plt.cm.gray)
-
-
 
 class Interferometer(object):
     """
     Class to implement and Interferometer to display WaveFront or Phase 
-    image held 2-numpy array. The constuctor just setup the system, it ued the .draw()
+    image held in atwo-dimensional numpy array. The constuctor just setup the system, it ued the .draw()
     method to render.
     
     :param wave: the wavefront either a WaveFront class or numpy array (Default = None)
@@ -1229,12 +1257,12 @@ class Interferometer(object):
     :type ytilt: float
     :param  size: the size of the image in pixels, ignored if an np.ndarray is passed (Default=256)
     :type size: int
-    :param type: Type of interferometer, only "twyman" implemended (Default = "twyman")
+    :param type: Type of interferometer, only "twyman" implemended (Default = Twyman")
     :type type: str
     
     
     """
-    def __init__(self,wf = None ,xtilt = 3.0, ytilt = 0.0, size = 256, type = "twyman"):
+    def __init__(self,wf = None ,xtilt = 3.0, ytilt = 0.0, size = 256, type = "Twyman"):
 
         self.size = size
         self.setWaveFront(wf)

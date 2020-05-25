@@ -1098,6 +1098,7 @@ class Vector3d(object):
         if isinstance(b,Vector3d):
             return Vector3d(self.x * b.x, self.y * b.y, self.z * b.z)
         else:
+            b = float(b)
             return Vector3d(self.x * b , self.y * b, self.z * b)
     #
     #
@@ -1108,6 +1109,7 @@ class Vector3d(object):
         if isinstance(b,Vector3d):
             return Vector3d(self.x * b.x, self.y * b.y, self.z * b.z)
         else:
+            b = float(b)
             return Vector3d(self.x * b , self.y * b, self.z * b)
     #
     #    
