@@ -74,14 +74,24 @@ Class to implement a source of rays, being a vector position with assoiated inte
 .. autoclass:: poptics.ray.SourcePoint
    :members:
 
+Disc Class
+==========
+
+A class to implement a circular disc in the x/y plane in global coordinates which allows the formation of RayPencil
+with the need for the compliactions of the poptics.surface classes.
+
+.. autoclass:: poptics.ray.Disc
+   :members:
+
 RayPencil
 =========
 
-The most useful and powerful class for handling rays is the RayPencil, beinng a list or rays that can be propagated through surfaces with the
-"\*=" operator. There are also a set of powerful method that allow the creation of various types or RayPencils.
+The most useful and powerful class for handling rays is the RayPencil, beinng a list or rays that
+can be propagated through surfaces with the "\*=" operator. There are also a set of powerful method that allow the creation of
+various types or RayPencils.
 
 .. autoclass:: poptics.ray.RayPencil
    :members:
 
 
-  
+ 

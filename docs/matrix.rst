@@ -131,6 +131,9 @@ Extending Classes
 
 There are a set of extending classes to implement specific ParaxialGroup making these easier to call.
 
+.. autoclass:: poptics.matrix.ParaxialAperture
+   :members:
+
 .. autoclass:: poptics.matrix.ParaxialThinLens
    :members:
 
@@ -152,6 +155,7 @@ There are a set of extending classes to implement specific ParaxialGroup making 
 .. autoclass:: poptics.matrix.ParaxialPlane
    :members:
 
+      
  
 Example Code
 ============

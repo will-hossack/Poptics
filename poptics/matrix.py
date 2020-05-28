@@ -9,8 +9,14 @@
 from poptics.vector import Vector3d, Angle, Unit3d
 from matplotlib.pyplot import plot, legend
 import math
-import sys
 import poptics.tio as tio
+from os.path import join
+from importlib.resources import path
+
+#       Set the gkobal Matrixpath to point to where the lines are
+with path("poptics","lenses") as p:
+        MatrixPath = p
+
 
 
 class ParaxialMatrix(object):
@@ -30,7 +36,6 @@ class ParaxialMatrix(object):
     :type t: float
 
     Defaults to unit matrix of zero thickness.
-
     """
 
     def __init__(self, a=1.0, b=0.0, c=0.0, d=1.0, t=0.0):
@@ -66,10 +71,9 @@ class ParaxialMatrix(object):
 
     def copy(self):
         """
-        Return copy of current ParaxialMatrix
+        Returns a copy of current ParaxialMatrix
 
-        :return: Copy of the current Paraxialmatrix
-
+        :return: Paraxialmatrix
         """
         return ParaxialMatrix(self)
 
@@ -78,7 +82,6 @@ class ParaxialMatrix(object):
         Trace of the matrix.
 
         :return: float, being trace of the matrix
-
         """
         return self.A + self.D
 
@@ -87,7 +90,6 @@ class ParaxialMatrix(object):
         Determinant of the matrix.
 
         :return: float, being determinant of matrix.
-
         """
         return self.A*self.D - self.B*self.C
 
@@ -128,8 +130,7 @@ class ParaxialMatrix(object):
         Get the back power, so power in image space (assume the matrix
         is for imaging system)
 
-        :return: back power as a float
-
+        :return: float
         """
         return -self.C
 
@@ -158,7 +159,6 @@ class ParaxialMatrix(object):
         (assumes the matrix is for imaging system)
 
         :return: position of back principle plane relative to output plane.
-
         """
         return (1.0 - self.A)/self.C
 
@@ -191,7 +191,7 @@ class ParaxialMatrix(object):
 
     def frontPrincipalPlane(self):
         """
-        Get position of front principal plane relative to the input plane.  
+        Get position of front principal plane relative to the input plane.
 
         :return: position of front principal plane relative to input plane as a float.
 
@@ -205,7 +205,7 @@ class ParaxialMatrix(object):
         :param focal: target focal length.
         :type flocal: float
         :return: self
-        
+
         """
         f = self.backFocalLength()
         self.scale(focal/f)
@@ -218,11 +218,11 @@ class ParaxialMatrix(object):
 
         :param m: the ParaxialMatrix
         :type m: ParaxialMatrix or float\
-        :return: self 
+        :return: self
 
         Note: this is a pre-multiply and not the normal matrix multiply.
         """
-        if isinstance(m,ParaxialMatrix):
+        if isinstance(m, ParaxialMatrix):
             a = m.A*self.A + m.B*self.C
             b = m.A*self.B + m.B*self.D
             c = m.C*self.A + m.D*self.C
@@ -232,7 +232,7 @@ class ParaxialMatrix(object):
             self.C = c
             self.D = d
             self.thickness += m.thickness
-        elif isinstance(m,float) or isinstance(m,int):    # Scale
+        elif isinstance(m, (float,int)):
             self.scale(m)
         else:
             raise TypeError("ParaxialMatrix *= call with unknown type " + str(m))
@@ -240,9 +240,9 @@ class ParaxialMatrix(object):
 
     def __mul__(self,m):
         """
-        Method to pre-multiply the current matrix by a another 
+        Method to pre-multiply the current matrix by a another
         Paraxialmatrix, or if a float it is scaled. Implememnts a = self \* m
- 
+
         :param m: ParaxialMatrix to premultiply
         :type m: ParaxialMatrix or float
         :return: a  new ParaxialMatrix
@@ -252,8 +252,8 @@ class ParaxialMatrix(object):
         r = self.copy()
         r *= m
         return r
-        
-    
+
+
     def __add__(self,d):
         """
         Implement adding a distance d, so will return a new matrix after pre-multiply by propagation
@@ -271,7 +271,7 @@ class ParaxialMatrix(object):
     def __iadd__(self, d):
         """
         Implement a propagation a distance d in place by pre-multiply of a propagation matrix of distance d.
-        
+
         :param d: the distance
         :type d: float or int
         :return: self
@@ -290,7 +290,7 @@ class PropagationMatrix(ParaxialMatrix):
     :type d: float
 
     """
-    #      
+    #
     def __init__(self,d):
         """
         Constructor with single parameter.
@@ -300,28 +300,27 @@ class PropagationMatrix(ParaxialMatrix):
 
 class DielectricMatrix(ParaxialMatrix):
     """
-    Matrix for flat or curved interface dilectric interface.
+    Matrix for a curved dilectric interface.
 
     :param nl:  refractive index on left of interface.
     :type nl: float
     :param nr: refractive index on right of interface
-    :type nl: float
+    :type nr: float
     :param c: curvature of interface. (default = 0.0 for flat surface)
     :type c: float
-    
     """
-    #       
+    #
     def __init__(self, nl, nr, c = 0.0):
         """
         Constructor with three parameters
-        
+
         """
         ParaxialMatrix.__init__(self, 1.0 , 0.0, c*(nl - nr)/nr , nl/nr, 0.0)
 
 class ThinLensMatrix(ParaxialMatrix):
     """
-    ParaxialMatrix for a thin lens, will take ether one parameter (focal length) or 
-    three paraeters, being curvatues and refratcive index. 
+    ParaxialMatrix for a thin lens, will take ether one parameter (focal length) or
+    three paraeters, being curvatues and refractive index.
 
     :param f_or_cl: flocal length or left curvature.
     :type f_or_cl: float
@@ -329,9 +328,8 @@ class ThinLensMatrix(ParaxialMatrix):
     :type n: float
     :param cr: right curature (defaults to None), if n is None, this is not accessed.
     :type cr: float
-
     """
-    #       
+    #
     def __init__(self,f_or_cl,n = None,cr = None):
         """
         Constuctor with one or three paramters
@@ -339,8 +337,8 @@ class ThinLensMatrix(ParaxialMatrix):
         if n == None:                   # Only one parameter
             ParaxialMatrix.__init__(self,1.0 , 0.0 , -1.0/float(f_or_cl) , 1.0, 0.0)
         else:
-            a = DielectricMatrix(1.0,n,f_or_cl) 
-            b = DielectricMatrix(n,1.0,cr) 
+            a = DielectricMatrix(1.0,n,f_or_cl)
+            b = DielectricMatrix(n,1.0,cr)
             ParaxialMatrix.__init__(self,a*b)
 
 class ThickLensMatrix(ParaxialMatrix):
@@ -355,13 +353,13 @@ class ThickLensMatrix(ParaxialMatrix):
     :type t: float
     :param cr: right curvature
     :type cr: float
-    
+
     """
     #
     def __init__(self, cl , n , t , cr):
         """
         Constructor with 4 parameters, all reqired
-        
+
         """
         a = DielectricMatrix(1.0,n,cl)     # Front surface
         b = PropagationMatrix(t)           # Thickness
@@ -372,7 +370,7 @@ class ThickLensMatrix(ParaxialMatrix):
 class DoubletMatrix(ParaxialMatrix):
     """
     Paraxial matrix for double lens with common surface.
-    
+
     :param cl: left curvature
     :type cl: float
     :param nl: left refractive index
@@ -387,12 +385,12 @@ class DoubletMatrix(ParaxialMatrix):
     :type tr: float
     :param cr: right curvatute
     :type cr: float
-    
+
     """
     def __init__(self, cl, nl, tl, cm, nr, tr, cr):
         """
         Constructor for a doublet, all required
-        
+
         """
         a = DielectricMatrix(1.0,nl,cl)
         a += tl
@@ -404,7 +402,7 @@ class DoubletMatrix(ParaxialMatrix):
 class MirrorMatrix(ParaxialMatrix):
     """
     Paraxial Matrix of a mirror specified by curvature.
-    
+
     :param c: the curvature of the mirror.
     :type c: float
 
@@ -412,7 +410,7 @@ class MirrorMatrix(ParaxialMatrix):
     def __init__(self,c):
         """
         Constructor with single parameter, the curvature of the mirror
-        
+
         """
         ParaxialMatrix.__init__(self,1.0,0.0,-2.0*float(c),1.0,0.0)
 
@@ -427,20 +425,20 @@ class CavityMatrix(ParaxialMatrix):
     :type t: float
     :param rc: right mirror curvature
     :type rc: float
-    
+
     """
     def __init__(self,lc,t,rc):
         """
         Constuctor with three paramters
-        
+
         """
         lm = MirrorMatrix(lc)
         d = PropagationMatrix(t)
         rm = MirrorMatrix(rc)
         ParaxialMatrix.__init__(self,d*rm*d*lm)
         self.thickness = 0.0              # Special for cavity
-        
-        
+
+
 
 
 class ParaxialGroup(ParaxialMatrix):
@@ -463,7 +461,7 @@ class ParaxialGroup(ParaxialMatrix):
     def __init__(self,p = 0.0, matrix = ParaxialMatrix(), in_height = float("inf"), out_height = None, title = None):
         """
         Constructor for an ParaxialGroup
-        
+
         """
         ParaxialMatrix.__init__(self,matrix)    # Set matrix
         self.setInputPlane(p)             # Input plane
@@ -486,8 +484,13 @@ class ParaxialGroup(ParaxialMatrix):
         return s + "i: {0:7.2f} hi: {1:5.3f} ho: {2:5.3f} {3:s}".format(self.input_plane,\
                 self.inputPlaneHeight,self.outputPlaneHeight, ParaxialMatrix.__str__(self))
 
-     #          Method to make a deep copy of the current Paraxial Group
+
     def copy(self):
+        """
+        Return a deep copy of the ParaxialGroup
+
+        :return: ParaxialGroup
+        """
         return ParaxialGroup(self.input_plane,self,self.inputPlaneHeight,self.outputPlaneHeight,self.title)
 
 
@@ -505,11 +508,10 @@ class ParaxialGroup(ParaxialMatrix):
 
     def incrementInputPlane(self,delta):
         """
-        Incremment the input plane
-   
+        Incremment the position of the input plane
+
         :param delta: the shift
         :type delta: float
-
         """
         self.input_plane += float(delta)
         return self
@@ -522,27 +524,25 @@ class ParaxialGroup(ParaxialMatrix):
             d = m.inputPlane() - self.outputPlane()
             ParaxialMatrix.__iadd__(self,d)
             self.outputPlaneHeight = m.outputPlaneHeight
-            
+
         ParaxialMatrix.__imul__(self,m)
         return self
 
-    #          
+    #
     def inputPlane(self):
         """
         Method to get input plane.
-        
-        :return: potiton of the input plane in global coordinates.
 
+        :return: potiton of the input plane in global coordinates.
         """
         return self.input_plane
 
-    #          
+    #
     def outputPlane(self):
         """
-        Method to get output plane. 
+        Method to get output plane.
 
         :return: position of the output plane is global coordinates.
-
         """
         return self.input_plane + self.thickness    # always calculate
 
@@ -553,8 +553,7 @@ class ParaxialGroup(ParaxialMatrix):
 
         :return: maximum radius as a float.
 
-        Typically called by other classes.
-
+        Typically called by other classes in the main poptics package.
         """
         return self.inputPlaneHeight
 
@@ -565,17 +564,15 @@ class ParaxialGroup(ParaxialMatrix):
         :return: get the group point Vector3d
 
         For compatibility for OpticalGroup.
-
         """
         return Vector3d(0.0,0.0,self.input_plane)
-          
+
     def scale(self,a):
         """
         Method to scale the matrix and plane heights.
 
         :param a: scale factor
         :type a: float
-        
         """
         ParaxialMatrix.scale(self,a)
         self.inputPlaneHeight *= a
@@ -587,7 +584,6 @@ class ParaxialGroup(ParaxialMatrix):
         Method to get the back focal plane in global coodinates
 
         :return: location of front focal plane in global coordinates.
-
         """
         return self.outputPlane() + ParaxialMatrix.backFocalPlane(self)
 
@@ -596,37 +592,33 @@ class ParaxialGroup(ParaxialMatrix):
         Get the back Nodal point, (normally same as back principal plane)
 
         :return: location of back focal point in global coordinates.
-
         """
         return self.backFocalPlane() + self.frontFocalLength()
 
 
     def backPrincipalPlane(self):
         """
-        Method to get the back principal plane 
+        Method to get the back principal plane
 
         :return: location of back principle plane is global coordinates.
-
         """
         return self.outputPlane() + ParaxialMatrix.backPrincipalPlane(self)
 
-    #          
+    #
     def frontFocalPlane(self):
         """
         Method to get the front focal plane in global coodinates
 
         :return: location of front focal plane in global coordinates.
-
         """
         return self.inputPlane() + ParaxialMatrix.frontFocalPlane(self)
 
-    #          
+    #
     def frontPrincipalPlane(self):
         """
         Method to get the front principal plane in global coordinates
-    
-        :return: location of front principal plane in global coordinates.
 
+        :return: location of front principal plane in global coordinates.
         """
         return self.inputPlane() + ParaxialMatrix.frontPrincipalPlane(self)
 
@@ -635,15 +627,14 @@ class ParaxialGroup(ParaxialMatrix):
         Get Front Modal point, (normall the same as front Prinicpal Plane)
 
         :return: location of front nodal point in global coordinates.
-
         """
         return self.frontFocalPlane() + self.backFocalLength()
 
     def cardinalPoints(self):
-        """ 
+        """
         Method to get the 6 cardinal points as a list.
 
-        :return: [Front Focal Point, Back Focal Point, Front principal plane, Back principal plane,, Front nodal point,  Back nodal point]
+        :return: [Front Focal Point, Back Focal Point, Front principal plane, Back principal plane, Front nodal point,  Back nodal point]
 
 
         """
@@ -656,20 +647,19 @@ class ParaxialGroup(ParaxialMatrix):
         Get detailed infor of the Paraxial Group and formatted string
 
         :return: formatted string with details of ParaxialGroup.
-
         """
         pt = self.cardinalPoints()
         return repr(self) + "\nfl: {0:7.5f}".format(self.backFocalLength()) + \
             "\nffp: {0:7.5f}\nbfp: {1:7.5f}\nfpp: {2:7.5f}\nbpp: {3:7.5f}\nfnp: {4:7.5f}\nbnp: {5:7.5f}".\
             format(pt[0],pt[1],pt[2],pt[3],pt[4],pt[5])
-        
 
-    
+
+
     def imagePlane(self, op):
         """
         Method to get the image plane for specified object plane using geometric lens fomula
         and properties of the current group.
-        
+
         :param op: location on object plane on optical axis
         :type op: float
         :return: position of image plane in global coordinates.
@@ -678,8 +668,8 @@ class ParaxialGroup(ParaxialMatrix):
         u = self.frontPrincipalPlane() - float(op)      # distance from front principal plane
         v = u/(self.backPower()*u - 1.0)           # distance from back principal plane
         return  self.backPrincipalPlane() + v          # where the image is
-    
-    
+
+
     def planePair(self,height,mag):
         """
         Calcualte the object image plane pair for specifed magnification in global coordinates.
@@ -699,7 +689,7 @@ class ParaxialGroup(ParaxialMatrix):
         obj = ParaxialPlane(op,height)          # Make the planes
         ima = ParaxialPlane(ip,abs(height*mag))
         return [obj,ima]
-    
+
 
     def setWithPlanes(self,obj,ima):
         """
@@ -736,24 +726,24 @@ class ParaxialGroup(ParaxialMatrix):
 
     def imagePoint(self,op):
         """
-        Method to calcualte three-dimensional image of a point in object space in global 
-        coordinates using geometric optics.
-        
+        Method to calcualte three-dimensional image of a point in object space in global
+        coordinates using geometric optics. op be in range of formats:
+
+        - float, Angle, Unit3d: assumes an infinite object.
+        - Vector3d: finite object at specified vector location.
+
         :param op: Position of object point
-        :type op: vector.Vector3d OR  vector.Unit3d or vector. Angle where it will assume an finite object
+        :type op: Vector3d or  Unit3d or Angle or float
         :return: Position the image point as vector.Vector3d
+
+        This is
 
         """
 
-        if isinstance(op,float):
-            return self.imagePoint(Unit3d(Angle(op)))
-        
-        elif isinstance(op,Unit3d):                         # Infinte object
+        if isinstance(op,(float, int, Unit3d, Angle)):     # Infitite Object
+            op =  Unit3d().parseAngle(op)                  # Sort out angle
             p = Vector3d(0,0,self.backNodalPoint())
             return Vector3d(p + op*(self.backFocalLength()/op.z))
-        
-        elif isinstance(op,Angle):                        # Also infinite object
-            return self.imagePoint(Unit3d(op))
 
         elif isinstance(op,Vector3d):                       # Finite object
             u = self.frontPrincipalPlane() - op.z
@@ -761,35 +751,36 @@ class ParaxialGroup(ParaxialMatrix):
             ip = self.backPrincipalPlane() + v               # Image location
             mag = -v/u
             return Vector3d(mag*op.x , mag*op.y , ip)
-       
-        else:
-            raise TypeError("matrix.ParaxialGroup.pointImage: called with unknown type {0:s}".format(str(op))) 
 
-    def draw(self,showlegend = False):
+        else:
+            raise TypeError("matrix.ParaxialGroup.pointImage: called with unknown type {0:s}".format(str(op)))
+
+    def draw(self, showlegend = False, location = "lower right"):
         """
         Draw the input/output planes and the 4 cardinal planes using plt.plot() in the current axis.
 
         :param showlegend: flag to display legend on plot, (Default = False)
         :type showlegend: Bool
+        :param location: location of legend, (Default = "lower right")
 
         """
         if math.isinf(self.inputPlaneHeight) :
             height = 10.0
         else:
             height = self.inputPlaneHeight
-        
+
         # y = [-self.inputPlaneHeight,self.inputPlaneHeight]        # The plane heights
-        
+
         #                             Front Focal plane
-        ff = self.frontFocalPlane()       
+        ff = self.frontFocalPlane()
         zff = [ff,ff]
         yfp = [-0.5*height,0.5*height]
-        
+
         #                             Input plane
         ip = self.inputPlane()
         z_ip = [ip,ip]
         yip = [-height,height]
-        
+
         #                             Front Principal
         fp = self.frontPrincipalPlane()
         zfp = [fp,fp]
@@ -813,14 +804,19 @@ class ParaxialGroup(ParaxialMatrix):
         plot(zfp,ypp,"r",label="Front Principal")
         plot(zbp,ypp,"g",label="Back Principal")
         if showlegend:
-            legend(loc="lower right",fontsize="xx-small")
+            legend(loc=location,fontsize="xx-small")
 
 
 
 class ParaxialAperture(ParaxialGroup):
     """
-    Form  a Paraxial aperture
-    """ 
+    Form  a Paraxial aperture to test height only
+
+    :param p: the location on the optical axis
+    :type p: float
+    :param h: heigh (or radius) of apterute
+    :type h: float
+    """
     def __init__(self,p ,h):
         m = ParaxialMatrix()                # Default identity matrix
         ParaxialGroup.__init__(self,m,p,h)  # set matrix, position and input height
@@ -829,8 +825,8 @@ class ParaxialAperture(ParaxialGroup):
 class ParaxialThinLens(ParaxialGroup):
     """
     Paraxial group holding a thin lens.
-    
-    :param p: input plane position on optical axis 
+
+    :param p: input plane position on optical axis
     :type p: float
     :param f_or_cl: focal length OR left curvature.
     :type f_or_cl: float
@@ -851,8 +847,8 @@ class ParaxialThinLens(ParaxialGroup):
 class ParaxialThickLens(ParaxialGroup):
     """
     Paraxial Group to hold a Thick Lens
-    
-    :param p: input plane position on optical axis 
+
+    :param p: input plane position on optical axis
     :type p: float
     :param cl: left curvature of lens
     :type cl: float
@@ -875,7 +871,7 @@ class ParaxialThickLens(ParaxialGroup):
 class ParaxialDoublet(ParaxialGroup):
     """
     Paraxial group to hold a doublet lens.
-    
+
     :param p: input plane position on optical axis
     :type p: float
     :param cl: left curvature
@@ -896,24 +892,24 @@ class ParaxialDoublet(ParaxialGroup):
     :type radius: float
     :param title: the title (Default = Nond)
     :type title: str
-    
+
 
     """
     def __init__(self, p, cl, nl, tl, cm, nr, tr, cr,radius = float("inf"),title = None):
         """
         Constructor for a doublet, all required
-       
+
         """
         m = DoubletMatrix(cl,nl,tl,cm,nr,tr,cr)
         ParaxialGroup.__init__(self,p,m,radius,title = title)
-    
+
 
 
 class ParaxialMirror(ParaxialGroup):
     """
     Paraxial Group consisting of a curved mirror
-    
-    :param p: input plane position on optical axis 
+
+    :param p: input plane position on optical axis
     :type p: float
     :param c: curvature of mirror
     :type c: float
@@ -938,12 +934,25 @@ class DataBaseMatrix(ParaxialGroup):
     If file = None, user will be prompted via tio.openFile
 
     """
-    def __init__(self, file = None):
+    def __init__(self, fn = None):
         """
         Read a paraxial group from a file, if a str, then the file is opened.
         """
         ParaxialGroup.__init__(self,0.0)
 
+
+        if fn == None:
+            #lensfile = tio.openFile("Lens file","r","lens")
+            fn = tio.getFilename("Matrix file","matrix")
+        if not fn.endswith("matrix"):        # Append ".lens" if not given
+                fn += ".matrix"
+
+        if not fn.startswith("/"):
+            fn = join(MatrixPath,fn)
+
+        file = open(fn,"r")
+
+        """
         if file == None:                  #    No file given
             file = tio.openFile("Matrix file","r","matrix")
         elif isinstance(file,str):  #    File name given as a string
@@ -955,17 +964,19 @@ class DataBaseMatrix(ParaxialGroup):
             except:
                 print("ParaxialGroup.readFile() failed to open file " + file)
                 file = tio.openFile("Matrix file","r","matrix")
+        """
 
-        
         fno = None
         #
         #     Read in line at a time
+        lines = file.readlines()
+        file.close()
         try:
-            for line in file.readlines() :
+            for line in lines :
                 line = line.strip()
                 if not line.startswith("#") and len(line) > 0:  #     Kill comments and blank lines
-                    token = line.split()                        #     Split to token 
- 
+                    token = line.split()                        #     Split to token
+
                     if token[0].startswith("matrix"):           # a matrix
                         a = float(token[1])
                         b = float(token[2])
@@ -974,7 +985,7 @@ class DataBaseMatrix(ParaxialGroup):
                         th = float(token[5])
                         self *= ParaxialMatrix(a,b,c,d,th)
 
-                    elif token[0].startswith("prop"):          # propagation distance 
+                    elif token[0].startswith("prop"):          # propagation distance
                         self +=float(token[1])
 
                     elif token[0].startswith("dielectric"):    # dialetric
@@ -1044,19 +1055,19 @@ class DataBaseMatrix(ParaxialGroup):
 
                     elif token[0].startswith("fno") :
                         fno = float(token[1])
-                        
+
 
                     elif token[0].startswith("title"):
                         self.title = ""
                         for t in token[1:]:
                             self.title += str(t) + " "
-                                
-                        
+
+
                     else:
                         print("DataBasematrix: unknown token: " + str(token[0]))
         except:
-            print("DataBaseMatrix: failed to read from file on line : " + str(line) + str(sys.exc_info()))
-        
+            print("DataBaseMatrix: failed to read from file on line : " + str(line))
+
         if fno != None:        # Fno has been used
             h = abs(0.5*self.backFocalLength() / fno)
             self.inputPlaneHeight = h
@@ -1065,7 +1076,7 @@ class DataBaseMatrix(ParaxialGroup):
 
 
 class ParaxialPlane(ParaxialGroup):
-    """   
+    """
     Class to represent an image / object plane
 
     :param p: poistion on plane in global coordinates (Default = 0.0)
@@ -1089,7 +1100,20 @@ class ParaxialPlane(ParaxialGroup):
         """
         return repr(self) + "\nPlane position: {0:7.4f}\nHeight: {1:7.4f}".format(self.inputPlane(),self.inputPlaneHeight)
 
-    def draw(self,legend = False):
+    def getHeight(self):
+        """
+        Get the height of the plane, if not defined returns 10.0 to allow sensible drawings.
+
+        :return: float
+        """
+        if math.isinf(self.inputPlaneHeight) :
+            return 10.0
+        else:
+            return self.inputPlaneHeight
+
+
+
+    def draw(self, legend = False):
         """
         Draw the plane  using plt.plot() to the current axis
 
@@ -1097,24 +1121,21 @@ class ParaxialPlane(ParaxialGroup):
         :type legend: Bool
 
         """
-        if math.isinf(self.inputPlaneHeight) :
-            height = 10.0
-        else:
-            height = self.inputPlaneHeight
-        
+        height = self.getHeight()
+
         y = [-height,height]
         ip = self.inputPlane()
         z = [ip,ip]
         plot(z,y,"#000000",label="Plane")
 
-        
-        
+
+
 
 class ParaxialSystem(list):
     """
     Class to hold a Paraxial sytem being a list of Paraxial Groups.
     """
-    
+
     def __init__(self,*args):
         """
         Constructor to which may have a number of Paraxial Groups, each of
@@ -1127,7 +1148,7 @@ class ParaxialSystem(list):
                 self.extend(pg)
             else:
                 self.append(pg)
-        
+
     def getInputPlane(self):
         """
          Method to get input plane (input plane of first group)
@@ -1145,22 +1166,22 @@ class ParaxialSystem(list):
         Get the max radius of the first electment
         """
         return self[0].maxRadius()
-        
+
     def getOutputPlane(self):
         """
          Method to get the output plane (output plane of last element)
         """
         return self[-1].outputPlane()
 
-    
+
     def getParaxialGroup(self):
         """
          Method to get the overall ParaxialGroup of the system.
         """
         gr = self[0].copy()         # copy of first element
-        for g in self[1:]:          # 
+        for g in self[1:]:          #
             d = g.inputPlane() - gr.outputPlane() # Distance to next input place
-            gr += d                 # propagate that distance 
+            gr += d                 # propagate that distance
             gr *= g                 # do mult of matrix
             gr.outputPlaneHeight = g.outputPlaneHeight  # set ouput height
 

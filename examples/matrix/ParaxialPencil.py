@@ -1,27 +1,46 @@
 """
-         Test of Paraxial Rays
+         Example to form an imaging system with specified magnification
+         and plot out system with ray pencil.
 """
 
-import poptics.ray as ray
-import poptics.matrix as mat
+
+from poptics.matrix import DataBaseMatrix
+from poptics.ray import RayPencil,RayPath
+from poptics.tio import getFloat,tprint
 import matplotlib.pyplot as plt
 
 def main():
 
-    lens = mat.DataBaseMatrix("$LENS/Tessar-100")
-    mag = -10.0
-    h = 5.0
-    op,ip  = lens.planePair(h,mag)
-    ps = mat.ParaxialSystem(op,lens,ip)
 
-    pencil = ray.RayPencil().addSourceParaxialBeam(lens,-5.0, op)
-    pencil.addMonitor(ray.RayPath())
+    lens = DataBaseMatrix("Tessar-100")      # get a lens from the database
+    lens.setFocalLength(80.0)                # Set the focal length to 80mm
+    lens.setInputPlane(120)
+    
+    #               Get system parameters
+    mag = getFloat("Magnification",-2)
+    ysize = getFloat("Height of Object plane",20.0)
+    
+    
+    #               Mage a pair of io / outplut place 
+    op,ip  = lens.planePair(ysize,mag)
+    tprint("Object plane at ; " + str(op.inputPlane()))
+    tprint("Image plane at ; "+ str(ip.inputPlane()))
+    
+    #               make a stsrem that conatins planes and lens in ordedr 
+    
 
-    pencil *= ps
-    fig,ax = plt.subplots()
-    ps.draw()
+    #                Maake a source bema from lower edge of object plane
+    pencil = RayPencil().addSourceParaxialBeam(lens,-ysize, op).addMonitor(RayPath())
+    #                Portagate throgh system
+    pencil *= lens
+    pencil *= ip
+
+    #                Draw out the sytsem
+    op.draw()
+    lens.draw(True)   # Add a legend box
+    ip.draw()
     pencil.draw()
-    #ax.set_aspect(1.0)
+    plt.axis("equal")
     plt.show()
 
 main()

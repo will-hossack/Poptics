@@ -1,79 +1,78 @@
-""" 
-Set of classes to support two and three dimensional vector manipulation. 
+"""
+    Set of classes to support two and three dimensional vector manipulation.
 """
 
 import math
-import random
+from random import uniform
+
 
 class Vector2d(object):
-    """  
-    Class to implement two dimensional vector with supporting classes and operator
-    overloads. 
-    
-    :param x_or_v: x component or pair of components.
-    :type x_or_v: float, Vector2d, list (to two floats)
+    """
+    Class to implement two dimensional vector with supporting classes and
+    operator overloads.
+
+    :param x: x component or pair of components.
+    :type x: float or Vector2d or list or tuple
     :param y: y component (Default = 0.0)
     :type y: float
-
     """
-    
-    def __init__(self,x_or_v = 0.0, y = 0.0):
-        """ 
+
+    def __init__(self, x=0.0, y=0.0):
+        """
         Constructor.
         """
-        if isinstance(x_or_v,Vector2d):    # Vector given
-            self.x = x_or_v.x
-            self.y = x_or_v.y
-        elif isinstance(x_or_v,list) or isinstance(x_or_v,tuple):
-            self.x = float(x_or_v[0])
-            self.y = float(x_or_v[1])
+        if isinstance(x, Vector2d):    # Vector given
+            self.x = x.x
+            self.y = x.y
+        elif isinstance(x, (list, tuple)):
+            self.x = float(x[0])
+            self.y = float(x[1])
         else:                              # two numbers or nothing given
-            self.x = float(x_or_v)         # Force to floats
+            self.x = float(x)         # Force to floats
             self.y = float(y)
 
-    #
-    def set(self,x_or_v = 0.0, y = 0.0):
+    def set(self, x=0.0, y=0.0):
         """
         Method to set componets of the vector in various formats.
 
-        :param x_or_v: x component or pair of components.
-        :type x_or_v: float, Vector2d, list[x,y]
+        :param x: x component or pair of components.
+        :type x: float, Vector2d, list[x,y]
         :param y: x component (Default = 0.0)
         :type y: float
 
         """
-        if isinstance(x_or_v,Vector2d):    # Vector given
-            self.x = x_or_v.x
-            self.y = x_or_v.y
-        elif isinstance(x_or_v,list) or isinstance(x_or_v,tuple):
-            self.x = float(x_or_v[0])
-            self.y = float(x_or_v[1])
+        if isinstance(x, Vector2d):    # Vector given
+            self.x = x.x
+            self.y = x.y
+        elif isinstance(x, (list, tuple)):
+            self.x = float(x[0])
+            self.y = float(x[1])
         else:                              # two numbers or nothing given
-            self.x = float(x_or_v)         # Force to floats
+            self.x = float(x)         # Force to floats
             self.y = float(y)
-            
 
     def __str__(self):
-        """ 
+        """
         Implement str() to return a string with components in 8.4e format.
         """
-        return "({0:8.4e} , {1:8.4e})".format(self.x,self.y)
+        return "({0:8.4e} , {1:8.4e})".format(self.x, self.y)
 
     def __repr__(self):
-        """ 
+        """
         Implments repr() to return a string with full call.
         """
         return "{} ".format(self.__class__.__name__) + str(self)
-        
 
     def __len__(self):
         """
         Implement len() to return 2
+
+        :return: int
         """
         return 2
 
-    #
-    def __getitem__(self,key):
+
+    def __getitem__(self, key):
         """
         Implement indexing on read using [i] syntax.
         """
@@ -94,39 +93,33 @@ class Vector2d(object):
             self.y = float(value)
         else:
             raise IndexError("Vector2d invalid write index of : {0}".format(key))
-    
+
     def copy(self):
         """
-        Return a copy of the current Vector2d.
+        Return a copy.
 
-        :return: copy of current :class:`Vector2d`
-
+        :return: copy of current Vector2d
         """
         return Vector2d(self)
 
-    #        
-    #
+
+
     def polar(self):
         """
         Return a copy of the current vector in polar (r,theta) as a list.
-        
-        :return: `list[r,theta]` as floats, if r = 0 return None.
-        
+
+        :return: list [r,theta]
         """
         r = self.abs()
-        if r != 0.0 :
-            theta = math.atan2(self.y,self.x)
-            return r,theta
-        else:
-            return None
-    #
-    #
+        theta = math.atan2(self.y,self.x)
+        return r,theta
+
     def rect(self):
         """
-        Return a copy of the current vector as a  form assumeing it is in 
+        Return a copy of the current vector as a  form assumeing it is in
         polar (r,theta) form.
 
-        Note: there is NO checking, so if the current Vector is NOT in polar form 
+        Note: there is NO checking, so if the current Vector is NOT in polar form
         you will get rubbish.
         """
         x = self.x*math.cos(self.y)
@@ -148,7 +141,7 @@ class Vector2d(object):
         Return the absSquare of the vector2d as a float. Does not use pow or \*\*2
         """
         return self.x*self.x + self.y*self.y
-    # 
+    #
     #
     def absCube(self):
         """
@@ -159,7 +152,7 @@ class Vector2d(object):
         """
         r = abs(self)
         return r*r*r
-        
+
     #
     #
     def abs(self):
@@ -183,14 +176,14 @@ class Vector2d(object):
         Note: if current vector is abs() = 0, the current vector will be set inValid()
 
         :return: the current Vector2d normalsied to unity.
-        """       
+        """
         a = self.abs()
         if a != 0.0:      # Vector must be zero
             self /= a
         else:
             self.setInvalid()
         return self
-    #      
+    #
     #
     def setLength(self,d):
         """
@@ -202,11 +195,11 @@ class Vector2d(object):
         :return: the current Vector2d set to specified length.
         """
         a = self.abs()
-        if a != 0.0:          # is current length not zero 
+        if a != 0.0:          # is current length not zero
             self *= (d/a)     # scale by multiply
         return self
 
-    #      
+    #
     def absNormalised(self):
         """
         Method to return length f vector and normalised vector as a pair
@@ -228,7 +221,7 @@ class Vector2d(object):
         self.x = -self.x
         self.y = -self.y
         return self
-    #      
+    #
     def __neg__(self):
         """
         Method to implement the __neg__ method to return a new -ve vector.
@@ -246,7 +239,7 @@ class Vector2d(object):
         self.x = round(self.x, figs)
         self.y = round(self.y, figs)
         return self
-    # 
+    #
     def __gt__(self,b):
         """
         Implement abs(self) > abs(b)
@@ -271,10 +264,10 @@ class Vector2d(object):
         """
         return abs(self) <= abs(b)
     #
-    #      
+    #
     def setInvalid(self):
         """
-        Method to set to invalid current vector2d to Invalid by setting both compoents 
+        Method to set to invalid current vector2d to Invalid by setting both compoents
         to float("nan")
         """
         self.x = float("nan")
@@ -288,13 +281,13 @@ class Vector2d(object):
         """
         return not math.isnan(self.x)
     #
-    #      
+    #
     def __bool__(self):
         """
         Implment bool for logical test if Valid
         """
         return not math.isnan(self.x)
-    #      
+    #
     #
     def rotate(self,gamma):
         """
@@ -311,8 +304,8 @@ class Vector2d(object):
     #
     def __iadd__(self,v):
         """
-        Method to implement the += to add Vector2d to current in place, if v is a 
-        Vectord2d the components will be added, while if it is a float it will be 
+        Method to implement the += to add Vector2d to current in place, if v is a
+        Vectord2d the components will be added, while if it is a float it will be
         added to each component.
         """
         if isinstance(v,Vector2d):
@@ -327,8 +320,8 @@ class Vector2d(object):
     #
     def __isub__(self,v):
         """
-        Method to implement the -= to subtract Vector2d from current in place, if v is a 
-        Vectord2d the components will be subtrated, while if it is a float it will be 
+        Method to implement the -= to subtract Vector2d from current in place, if v is a
+        Vectord2d the components will be subtrated, while if it is a float it will be
         subrtacted from each component.
         """
         if isinstance(v,Vector2d):
@@ -343,10 +336,10 @@ class Vector2d(object):
     #
     def __imul__(self,v):
         """
-        Method to implement the *= to multiply Vector2d by current in place, if v is a 
-        Vectord3d the component s will be multiplied, while if it is a float it will 
+        Method to implement the *= to multiply Vector2d by current in place, if v is a
+        Vectord3d the component s will be multiplied, while if it is a float it will
         multiply each component.
-        """ 
+        """
         if isinstance(v,Vector2d):
             self.x *= v.x
             self.y *= v.y
@@ -359,10 +352,10 @@ class Vector2d(object):
     #
     def __itruediv__(self,v):
         """
-        Method to implement the /= to divide current vector in place, if v is a 
-        Vectord2d the components will be divided, while if it is a float it will 
+        Method to implement the /= to divide current vector in place, if v is a
+        Vectord2d the components will be divided, while if it is a float it will
         divide each component.
-        """ 
+        """
         if isinstance(v,Vector2d):
             self.x /= v.x
             self.y /= v.y
@@ -370,7 +363,7 @@ class Vector2d(object):
             self.x /= v
             self.y /= v
         return self
-    
+
     #
     def __add__(self, b):
         """
@@ -386,7 +379,7 @@ class Vector2d(object):
     #
     def __radd__(self, b):
         """
-        Method to implments the c = b + self to add 2 Vector2d, of b is a float it will 
+        Method to implments the c = b + self to add 2 Vector2d, of b is a float it will
         be added to each component.
         return new Vector2d
         """
@@ -412,7 +405,7 @@ class Vector2d(object):
     #
     def __rsub__(self, b):
         """
-        Method to implments the c = b - self to add 2 Vector2d, of b is a float it 
+        Method to implments the c = b - self to add 2 Vector2d, of b is a float it
         will be added to each component.
         return new Vector2d
         """
@@ -424,8 +417,8 @@ class Vector2d(object):
     #
     def __mul__(self,b):
         """
-        Method to implemnt c = self * b for b being Vector 2d or float, if float it 
-        is appled to each component. 
+        Method to implemnt c = self * b for b being Vector 2d or float, if float it
+        is appled to each component.
         returns Vector2d.
         """
         if isinstance(b,Vector2d):
@@ -436,8 +429,8 @@ class Vector2d(object):
     #
     def __rmul__(self,b):
         """
-        Method to implemnt c = self * b for b being Vector 2d or float, if float 
-        it is appled to each component. 
+        Method to implemnt c = self * b for b being Vector 2d or float, if float
+        it is appled to each component.
         returns Vector2d.
         """
         if isinstance(b,Vector2d):
@@ -445,11 +438,11 @@ class Vector2d(object):
         else:
             return Vector2d(self.x * b , self.y * b)
     #
-    #     
+    #
     def __truediv__(self,b):
         """
-        Method to implemnt c = self / b for b being Vector 2d or float, if float it 
-        is appled to each component. 
+        Method to implemnt c = self / b for b being Vector 2d or float, if float it
+        is appled to each component.
         returns Vector2d.
         """
         if isinstance(b,Vector2d):
@@ -457,11 +450,11 @@ class Vector2d(object):
         else:
             return Vector2d(self.x / b , self.y / b)
     #
-    #     
+    #
     def __rdiv__(self,b):
         """
-        Method to implemnt c = b / self for b being Vector 2d or float, if float 
-        it is appled to each component. 
+        Method to implemnt c = b / self for b being Vector 2d or float, if float
+        it is appled to each component.
         returns Vector2d.
         """
         if isinstance(b,Vector2d):
@@ -477,7 +470,7 @@ class Vector2d(object):
         return float the dot product
         """
         return self.x * b.x + self.y * b.y
-    #     
+    #
     #
     def distanceSquare(self, b):
         """
@@ -507,7 +500,7 @@ class Vector2d(object):
     def distance(self,b):
         """
         Method to get distance between two Vector2ds Note does NOT use \*\*2 or pow
-       
+
         :param b: the second Vector2d
         :type b: Vector2d
         :return: float the square of the distance between vectors.
@@ -550,10 +543,10 @@ class Vector2d(object):
     #
     #     Method to get the area between two Vectors3d
     #     b second Vector3d
-    #     return float, area defined by triangle formed by the two vectors 
+    #     return float, area defined by triangle formed by the two vectors
     #def areaBetween(self,b):
     #    v = self.cross(b)
-    #    return 0.5*abs(v)    
+    #    return 0.5*abs(v)
     #
     def inverseSquare(self,b, c = 1.0):
         """
@@ -567,78 +560,79 @@ class Vector2d(object):
 #
 #
 class Vector3d(object):
-    """  
+    """
     Class to implement three dimensional vectors.
 
-    :param x_or_v:  x component, Vector3d r of a list of floats. (default = 0.0)
-    :type x_or_v: float, Vector3d, list
-    :param  y: y component (default = 0.0)
+    :param x: x component, Vector3d r of a list of floats. (default = 0.0)
+    :type x: float or Vector3d or list or tuple
+    :param y: y component (default = 0.0)
     :type y: float
-    :param  z: z component (default = 0.0)
+    :param z: z component (default = 0.0)
     :type z: float
 
-    If x_or_v is a Vector3d or list then the valules of the y and z parameters will not be accessed. 
+    If x is a Vector3d or list/tuple then the contents of the y and z parameters
+    will not be accessed.
 
     """
     #
     #
-    def __init__(self,x_or_v = 0.0, y = 0.0, z = 0.0):
-
-        if isinstance(x_or_v,Vector3d):    # Vector given
-            self.x = x_or_v.x
-            self.y = x_or_v.y
-            self.z = x_or_v.z
-        elif isinstance(x_or_v,list) or isinstance(x_or_v,tuple):
-            self.x = float(x_or_v[0])
-            self.y = float(x_or_v[1])
-            self.z = float(x_or_v[2])
+    def __init__(self,x = 0.0, y = 0.0, z = 0.0):
+        if isinstance(x,Vector3d):    # Vector given
+            self.x = x.x
+            self.y = x.y
+            self.z = x.z
+        elif isinstance(x,(list,tuple)):
+            self.x = float(x[0])
+            self.y = float(x[1])
+            self.z = float(x[2])
         else:                              # three numbers or nothing given
-            self.x = float(x_or_v)
+            self.x = float(x)
             self.y = float(y)
             self.z = float(z)
-    # 
-    #        
-    def set(self,x_or_v = 0.0, y = 0.0,z = 0.0):
+
+
+
+    def set(self,x = 0.0 , y = 0.0, z = 0.0):
         """
         Method to set vector with various augument types.
 
-        :param x_or_v:  x component, Vector3d r of a list of floats. (default = 0.0)
-        :type x_or_v: float, Vector3d, list
-        :param  y: y component (default = 0.0)
+        :param x:  x component, Vector3d r of a list of floats. (default = 0.0)
+        :type x: float or Vector3d or list or tuple
+        :param y: y component (default = 0.0)
         :type y: float
-        :param  z: z component (default = 0.0)
+        :param z: z component (default = 0.0)
         :type z: float
 
-        If x_or_v is a Vector3d or list then the valules of the y and z parameters will not be accessed. 
-
         """
-        if isinstance(x_or_v,Vector3d):    # Vector given
-            self.x = x_or_v.x
-            self.y = x_or_v.y
-            self.z = x_or_v.z
-        elif isinstance(x_or_v,list) or isinstance(x_or_v,tuple):
-            self.x = float(x_or_v[0])
-            self.y = float(x_or_v[1])
-            self.z = float(x_or_v[2])
+        if isinstance(x,Vector3d):    # Vector given
+            self.x = x.x
+            self.y = x.y
+            self.z = x.z
+        elif isinstance(x,(list,tuple)):
+            self.x = float(x[0])
+            self.y = float(x[1])
+            self.z = float(x[2])
         else:                              # three numbers or nothing given
-            self.x = float(x_or_v)
+            self.x = float(x)
             self.y = float(y)
             self.z = float(z)
-            
-    #     
+
+        return self
+
+    #
     def __str__(self):
         """
-        Implement str() with components formatted with 8.4e 
+        Implement str() with components formatted with 8.4e
         """
         return "({0:8.4e} , {1:8.4e}, {2:8.4e})".format(self.x,self.y,self.z)
-    #        
+    #
     def __repr__(self):
         """
         Impment repr() with class name and components formatted with 8.4e
         """
         return "{}: ".format(self.__class__.__name__) + str(self)
     #
-    #        
+    #
     def __len__(self):
         """
         Get len() defined at 3
@@ -659,7 +653,7 @@ class Vector3d(object):
         else:
             raise IndexError("Vector3d invalid read index of : {0:d}".format(key))
     #
-    #      
+    #
     def __setitem__(self,key,value):
         """
         Implement indexing on write in s[i] syntax.
@@ -672,7 +666,7 @@ class Vector3d(object):
             self.z = float(value)
         else:
             raise IndexError("Vector3d invalid write index of : {0:d}".format(key))
-    #      
+    #
     #
     def copy(self):
         """
@@ -682,11 +676,11 @@ class Vector3d(object):
 
         """
         return Vector3d(self)
-    #       
+    #
     #
     def polar(self):
         """
-        Return a copy of current vector in polar form as a list.
+        Return a thecurrent vector in polar form as a list.
 
         :return: value of current Vector3d as a [r,theta,psi] as a list
 
@@ -697,8 +691,16 @@ class Vector3d(object):
             psi = math.atan2(self.x,self.y)
             return r,theta,psi
         else:
-            return None    # Default to zero vector
+            return 0.0,0.0,0.0
 
+    def polarDegrees(self):
+        """
+        Return the currennt vector in polar forms with angle in degrees.
+
+        :return: list of [r,theta,psi] in degrees
+        """
+        r, theta, psi = self.polar()
+        return r, math.degrees(theta), math.degrees(psi)
 
     def setPolar(self,r = 0.0, theta = 0.0, psi = 0.0):
         """
@@ -721,14 +723,14 @@ class Vector3d(object):
     def setPolarDegrees(self,r = 0.0, theta = 0.0, psi = 0.0):
         """
         Set the current vector using r,theta,psi format in degrees
-        
+
         :param r: r component (Default = 0.0)
         :type r: float
         :param theta: theta component (angle from z axis) (Default = 0.0)
         :type theta: float
         :param psi: psi component (angle from x axis) (Default = 0.0)
         :type psi: float
-        
+
         """
         return self.setPolar(r,math.radians(theta),math.radians(psi))
 
@@ -757,7 +759,7 @@ class Vector3d(object):
     def absCube(self):
         """
         Get the absCube of the Vector3d as a float defined abs(r)^3
-        
+
         :return: the cube of the absolute values as a float.
 
         """
@@ -770,36 +772,36 @@ class Vector3d(object):
         Implement abs() to return the abs length of Vector3d as a float.
         """
         return math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
-          
+
     def normalise(self):
         """
         Method to normalised vector in place.
-       
+
         Note: if abs() = 0, the current vector will be set inValid()
-        """ 
+        """
         a = abs(self)
         if a != 0.0:      # Vector must be zero
             self /= a
         else:
             self.setInvalid()
         return self
-      
+
 
     def setLength(self,d):
         """
-        Method to set the length (or abs) of the current vector to specified length 
+        Method to set the length (or abs) of the current vector to specified length
         by scaling.
         param d float length vector is set to.
         """
         a = self.abs()
-        if a != 0.0:          # is current length not zero 
+        if a != 0.0:          # is current length not zero
             self *= (d/a)     # scale by multiply
         return self
-    #    
+    #
     #
     def absNormalised(self):
         """
-        Method to return abs() and normalsied copy of current vector as a 
+        Method to return abs() and normalsied copy of current vector as a
         list pair (current vector not changed)
         return [a,n] where a abs() and n is normalsied Vector3d
         """
@@ -819,10 +821,10 @@ class Vector3d(object):
         self.y = -self.y
         self.z = -self.z
         return self
-    #      
+    #
     def __neg__(self):
         """
-        Implement the __neg__ method to return a new vector being the -ve of the current. 
+        Implement the __neg__ method to return a new vector being the -ve of the current.
         Note current not changed.
         """
         return Vector3d(-self.x,-self.y,-self.z)
@@ -838,7 +840,7 @@ class Vector3d(object):
         self.y = round(self.y, figs)
         self.z = round(self.z, figs)
         return self
-    # 
+    #
     #
     def __gt__(self,b):
         """
@@ -868,10 +870,10 @@ class Vector3d(object):
         return abs(self) <= abs(b)
 
     #
-    #      
+    #
     def setInvalid(self):
-        """ 
-        Method to set current vector3d to Invalid by setting all three 
+        """
+        Method to set current vector3d to Invalid by setting all three
         compoents to float("nan").
         """
         self.x = float("nan")
@@ -885,10 +887,10 @@ class Vector3d(object):
         param mag (float) the specified magnitude, defaults to 1.0
         """
         magSqr = mag*mag
-        while True:              # Set random point 
-            self.x = random.uniform(-mag,mag)
-            self.y = random.uniform(-mag,mag)
-            self.z = random.uniform(-mag,mag)
+        while True:              # Set random point
+            self.x = uniform(-mag,mag)
+            self.y = uniform,(-mag,mag)
+            self.z = uniform(-mag,mag)
             if self.absSquare() <= magSqr:   # Test if it within sphere, else try again
                 break
 
@@ -924,7 +926,7 @@ class Vector3d(object):
         self.z = z                      # Overwrite z
         return self
     #
-    #       
+    #
     def rotateAboutY(self,beta):
         """
         Method to implementate a rotation about y axis in place.
@@ -937,7 +939,7 @@ class Vector3d(object):
         self.x = x                      # Overwrite x
         self.z = z                      # Overwrite z
         return self
-    #       
+    #
     #
     def rotateAboutZ(self,gamma):
         """
@@ -959,7 +961,7 @@ class Vector3d(object):
     #
     def rotate(self,alpha,beta,gamma):
         """
-        Method to implmeent general Rotate about x , y, z in place. 
+        Method to implmeent general Rotate about x , y, z in place.
         The rotation order is x,y then z.
         param alpha rotation about x axis in radians
         param beta rotation about y axis in radians
@@ -969,12 +971,12 @@ class Vector3d(object):
         self.rotateAboutY(beta)
         self.rotateAboutZ(gamma)
         return self
-    #       
+    #
     #
     def __iadd__(self,v):
         """
-        Method to implement the += to add Vector3d to current in place, if v is a 
-        Vectord3d the components will be added, while if it is a float it will be 
+        Method to implement the += to add Vector3d to current in place, if v is a
+        Vectord3d the components will be added, while if it is a float it will be
         added to each component.
         """
         if isinstance(v,Vector3d):
@@ -991,7 +993,7 @@ class Vector3d(object):
     #
     def __isub__(self,v):
         """
-        Method to implement the -= to subtract Vector3d from current in place, if v is 
+        Method to implement the -= to subtract Vector3d from current in place, if v is
         a Vectord3d the components will be subtrated, while if it is a float it will
         be subrtacted from each component.
         """
@@ -1005,14 +1007,14 @@ class Vector3d(object):
             self.z -= v
         return self         # Return self
 
-    #     
+    #
     #
     def __imul__(self,v):
         """
-        Method to implement the *= to multiply Vector3d by current in place, if v is a 
-        Vectord3d the components will be multiplied, while if it is a float it will 
+        Method to implement the *= to multiply Vector3d by current in place, if v is a
+        Vectord3d the components will be multiplied, while if it is a float it will
         multiply each component.
-        """ 
+        """
         if isinstance(v,Vector3d):
             self.x *= v.x
             self.y *= v.y
@@ -1023,14 +1025,14 @@ class Vector3d(object):
             self.z *= v
         return self
 
-    #   
+    #
     #
     def __itruediv__(self,v):
         """
-        Method to implement the /= to divide current vector in place, if v is a 
-        Vectord3d the components will be devided, while if it is a float it will 
+        Method to implement the /= to divide current vector in place, if v is a
+        Vectord3d the components will be devided, while if it is a float it will
         divide each component.
-        """ 
+        """
         if isinstance(v,Vector3d):
             self.x /= v.x
             self.y /= v.y
@@ -1044,7 +1046,7 @@ class Vector3d(object):
     #
     def __add__(self, b):
         """
-        Implement c = self + b for Vector3d, if b is float, then it will be added to 
+        Implement c = self + b for Vector3d, if b is float, then it will be added to
         each component.
         returns new Vector3d
         """
@@ -1068,7 +1070,7 @@ class Vector3d(object):
     #
     def __sub__(self, b):
         """
-        Implement c = self - b for Vector3d, if b is float it will be subtracted 
+        Implement c = self - b for Vector3d, if b is float it will be subtracted
         from each element.
         returns new Vector3d
         """
@@ -1080,7 +1082,7 @@ class Vector3d(object):
     #
     def __rsub__(self, b):
         """
-        Implement c = b - self for Vector3d, if b is float it will be subtracted 
+        Implement c = b - self for Vector3d, if b is float it will be subtracted
         from each element.
         returns new Vector3d
         """
@@ -1088,7 +1090,7 @@ class Vector3d(object):
             return Vector3d(b.x - self.x, b.y - self.y, b.z - self.z)
         else:
             return Vector3d(b - self.x , b - self.y, b - self.z)
-    #     
+    #
     #
     def __mul__(self,b):
         """
@@ -1112,11 +1114,11 @@ class Vector3d(object):
             b = float(b)
             return Vector3d(self.x * b , self.y * b, self.z * b)
     #
-    #    
+    #
     def __truediv__(self,b):
         """
         Implement c = self / b for Vector3d, if b is float it will divide each element
-        """ 
+        """
         if isinstance(b,Vector3d):
             return Vector3d(self.x / b.x, self.y / b.y, self.z / b.z)
         else:
@@ -1126,30 +1128,30 @@ class Vector3d(object):
     def __rtruediv__(self,b):
         """
         Implement c = b / self for Vector3d, if b is float it will divide each element
-        """ 
+        """
         if isinstance(b,Vector3d):
             return Vector3d(b.x / self.x, b.y / self.y , b.z / self.z )
         else:
             return Vector3d(b / self.x, b / self.y, b / self.z )
-    
+
 
     def propagate(self,d,u):
         """
         Return a new vectors that is self + d*u.
         Added for efficency in optical calcualations.
-        
+
         :param d: distance
         :type d: float
         :param u: direction
         :type: Unit3d
         :return: new Vector3d
-        
+
         """
         return Vector3d(self.x + d*u.x , self.y + d*u.y, self.z + d*u.z)
-         
+
     def dot(self,b):
         """
-        Method to form the .dot product of self . b 
+        Method to form the .dot product of self . b
         returns float the dot product.
 
         :param b: the other Vector3d
@@ -1157,8 +1159,8 @@ class Vector3d(object):
         :return: dot product as a float.
         """
         return self.x * b.x + self.y * b.y + self.z * b.z
-    
-    
+
+
     def cross(self,b):
         """
         Method to form the cross product c = self x b
@@ -1169,8 +1171,8 @@ class Vector3d(object):
         tz = self.x*b.y - self.y*b.x
         return Vector3d(tx,ty,tz)
 
-    
-    
+
+
     def distanceSquare(self, b):
         """
         Method to get distanceSquare between two Vector3d, Note does NOT use \*\*2 or pow.
@@ -1190,7 +1192,7 @@ class Vector3d(object):
         """
         Method to get distanceCube between two Vector3d.
         Note does NOT use \*\*2 or pow.
-        
+
         :param b: the second Vector3d
         :type b: Vector3d:
         :return: float the cube of the distance between vectors.
@@ -1205,7 +1207,7 @@ class Vector3d(object):
     def distance(self,b):
         """
         Method to det the distance between two Vector3d.
-        
+
         :param b: second Vector3d
         :type b: Vector3d
         :return: float distance between two vectors.
@@ -1215,8 +1217,8 @@ class Vector3d(object):
     #
     def errorSquare(self,b):
         """
-        Method to get the normalsied square error between two Vector3d 
-        
+        Method to get the normalsied square error between two Vector3d
+
         :param b: Vector3d, the second vector
         :return: float the normalsied square error
         """
@@ -1225,23 +1227,23 @@ class Vector3d(object):
         ds = self.distanceSquare(b)     # square distance
         n = a*b                         # Normalisation
         if n != 0.0:
-            return ds/math.sqrt(n)      
+            return ds/math.sqrt(n)
         elif a != 0.0:
             return ds/math.sqrt(a)
         elif b != 0.0:
             return ds/math.sqrt(b)
         else:
             return ds             # which must be zero
-    #     
+    #
     #
     def angleBetween(self,b):
         """
         Method to get the angle between two Vector3d
-        
+
         :param b: second Vector3d
         :type b: Vector3d
         :return: float, angle in range -pi/2 and pi/2
-        
+
         Note: is abs(current) and abs(b) is zero, zero is returned.
         """
         s = abs(self)*abs(b)
@@ -1251,25 +1253,25 @@ class Vector3d(object):
             cq = self.dot(b)/s
             return math.acos(cq)
     #
-    #    
+    #
     def areaBetween(self,b):
         """
         Method to get the area between two Vectors3d defined by a = 0.5 * abs (self x b)
-        
+
         :param b: second Vector3d
         :type b: Vector3d
-        :return: float area defined by triangle formed by the two vectors 
+        :return: float area defined by triangle formed by the two vectors
         """
         v = self.cross(b)
         return 0.5*abs(v)
-    #     
+    #
     #
     def inverseSquare(self,b,c = 1.0):
         """
         Method to get the Vector3d from current to Vector3d by scaled by inverse square of
         the distance between them, for implementation of inverse square law forces.
         Formula implemented is        v = c\*(b - self) \|b - self \|^3
-        
+
         :param b: the second vector
         :type b: Vector3d
         :param c: scaling factor, (Defaults to 1.0)
@@ -1281,8 +1283,8 @@ class Vector3d(object):
         v *= s
         return v
 #
-#        
-      
+#
+
 
 #
 class Unit3d(Vector3d):
@@ -1290,49 +1292,126 @@ class Unit3d(Vector3d):
     Class to hold a unit Vector3d, it extends Vector3d with automormalsiation on creation and extra  methods
     to support optical ray calcualtions.
 
-    :param x_or_v: x componen, Angle, list[]  (default = 0.0)
+    :param x: x componen, Angle, list[]  (default = 0.0)
     :param y: the y component (default = 0.0)
     :param z: the z component (default = 0.0)
- 
-    If parameter is NOT a Unit3d or Angle it is automatically normalsied to unit. 
+
+    If parameter is NOT a Unit3d or Angle it is automatically normalsied to unit.
     Note if (0,0,0) or () suppled, the Unit3d will be set to inValid.
 
     """
-   
-    def __init__(self, x_or_v = 0.0, y = 0.0, z = 0.0):
+
+    def __init__(self, x = 0.0, y = 0.0, z = 0.0):
         """
         Constructor to create and set Unit3d.
-        
-        """
-        if isinstance(x_or_v,Angle):          # Angle passed
-            st = math.sin(x_or_v.theta) 
-            x = st*math.sin(x_or_v.psi)
-            y = st*math.cos(x_or_v.psi)
-            z = math.cos(x_or_v.theta)
-            Vector3d.__init__(self,x,y,z)
 
-        elif isinstance(x_or_v,Unit3d):       #  Unit3d passed, just copy
-            Vector3d.__init__(self,x_or_v)
+        """
+        if isinstance(x,Angle):          # Angle passed
+            st = math.sin(x.theta)
+            xl = st*math.sin(x.psi)
+            yl = st*math.cos(x.psi)
+            zl = math.cos(x.theta)
+            Vector3d.__init__(self,xl,yl,zl)
+
+        elif isinstance(x,Unit3d):       #  Unit3d passed, just copy
+            Vector3d.__init__(self,x)
 
         else:                                 # Pass to Vector3d to deal with the others
-            Vector3d.__init__(self, x_or_v, y, z)
+            Vector3d.__init__(self, x, y, z)
             self.normalise()                  # Force normalisation
 
-    #
+
+    def set(self,x = 0.0, y = 0.0, z = 0.0):
+        """
+        Method to actually set the Unit 3d
+        """
+
+        if isinstance(x,Angle):          # Angle passed
+            st = math.sin(x.theta)
+            xl = st*math.sin(x.psi)
+            yl = st*math.cos(x.psi)
+            zl = math.cos(x.theta)
+            Vector3d.set(self,xl,yl,zl)
+
+        elif isinstance(x,Unit3d):       #  Unit3d passed, just copy
+            Vector3d.set(self,x)
+
+        else:                                 # Pass to Vector3d to deal with the others
+            Vector3d.set(self, x, y, z)
+            self.normalise()                  # Force normalisation
+
+
+        return self
+
+
+
+    def parseAngle(self,*args):
+        """
+        Method to parse angle set Unit3d and return it. This accepts a much more
+        extensive set of angle defintions, so basically anything that cen be interepeted
+        as an "angle". So Unit3d, Angle, Vector3d, listir tuple if (x,y,z), list or tuple
+        of (theta,psi). Angle is float for radians and str() for degrees.
+
+        :param args: brtween 1 and 3 args.
+
+        """
+
+        if len(args) == 0:       # No args sent
+            return self.setInvalid()
+
+        if len(args) == 1:       # 1 argument
+            fa = args[0]      # Deal with one arg of
+
+            if isinstance(fa,(Unit3d,Vector3d,Angle)):
+                return self.set(fa)
+
+            elif isinstance(fa,(list,tuple)):  # list or tuple
+                if len(fa) ==  3:
+                    return self.set(fa)          # x,y,z as list
+                elif len(fa) == 2:
+                    return self.set(Angle(fa))   # theta,psi as liost
+                else:
+                    return self.set(Angle(fa[0])) # theta only
+
+            elif isinstance(fa,(float,int)):
+                return self.set(Angle(fa))
+
+            elif isinstance(fa,str):
+                fa = math.radians(float(fa))
+                return self.set(Angle(fa))
+            else:
+                return self.setInvalid() # Rubbish sent,
+
+        if len(args) == 2:       # Two args so must be angle
+            theta = args[0]
+            psi = args[1]
+
+            if isinstance(theta,str):               # If str convert degrees to radians
+                theta = math.radians(float(theta))
+                if isinstance(psi,str):
+                    psi = math.radians(float(psi))
+            return self.set(Angle(theta,psi))         # Return required
+        else:
+
+            return self.set(*args)                    # Pass 3 args to Unit3()
+
+
+
+
     def copy(self):
         """
         Return copy of current Unit3d.
         """
         return Unit3d(self)
 
-    
+
     def random(self):
         """
         Set the current Unit3d random a random point in a three-dimensional unit sphere.
-        
+
         :return: self
         """
-        u = Unit3d(Angle().random())         # get random Unit3d 
+        u = Unit3d(Angle().random())         # get random Unit3d
         self.set(u)
         return self
 
@@ -1354,7 +1433,7 @@ class Unit3d(Vector3d):
     def setPolarDegrees(self, theta = 0.0, psi = 0.0):
         """
         Set the current unit3d  using theta,psi format in degrees
-        
+
         :param theta: theta component (angle from z axis) (Default = 0.0)
         :type theta: float
         :param psi: psi component (angle from x axis) (Default = 0.0)
@@ -1364,13 +1443,13 @@ class Unit3d(Vector3d):
 
 
     def getAngle(self):
-        """ 
+        """
         Method to get the current Unit3d as an Angle
         """
         return Angle(self)
 
-    
-           
+
+
     def reflection(self,n):
         """
         Method to refect current Unit3d from a surface specified by its surface normal.
@@ -1383,11 +1462,11 @@ class Unit3d(Vector3d):
         self -= 2.0*self.dot(n)*n
         return self.isValid()
 
-    #        
+    #
     #
     def refraction(self, n, ratio):
         """
-        Method to refract the current Unit3d through a suface with surface 
+        Method to refract the current Unit3d through a suface with surface
         specified by its surface normal.
 
         :param n: the surface normal of the surface.
@@ -1402,7 +1481,7 @@ class Unit3d(Vector3d):
             self.setIvalid()
             return False
 
-        if ratio == 1.0:       # Nothing to do, 
+        if ratio == 1.0:       # Nothing to do,
             return True
         else:
             a = 1.0/ratio
@@ -1418,7 +1497,7 @@ class Unit3d(Vector3d):
                 self.y = self.y*a + n.y*d
                 self.z = self.z*a + n.z*d
                 return True    # Success
-#              
+#
 #
 class Angle(object):
     """
@@ -1432,11 +1511,11 @@ class Angle(object):
 
     Note all angles in radians.
     """
-    
+
     def __init__(self,theta = 0.0,psi = 0.0):
         """
         Constructor to set two angles
-       
+
         """
 
         if isinstance(theta,Angle):                # Deal with Angle
@@ -1448,11 +1527,11 @@ class Angle(object):
             if r != 0.0 :
                 self.theta = math.acos(theta.z/r)
                 self.psi = math.atan2(theta.x , theta.y)
-            else:                                  
+            else:
                 self.theta = 0.0
                 self.psi = 0.0
-        
-        elif isinstance(theta,list) or isinstance(theta,tuple):  # Deal with list or truple
+
+        elif isinstance(theta,(list,tuple)):  # Deal with list or truple
             self.theta = float(theta[0])
             self.psi = float(theta[1])
 
@@ -1480,15 +1559,15 @@ class Angle(object):
         Return a copy if current Angle()
         """
         return Angle(self)
-    
+
     def setInvalid(self):
-        """ 
+        """
         Method to set current Angle to Invalid by setting all theta and psi to float("nan").
         """
         self.theta= float("nan")
         self.psi = float("nan")
         return self
-    
+
     def isValid(self):
         """
         Method to test if Angle is Valid
@@ -1497,14 +1576,14 @@ class Angle(object):
 
         """
         return not math.isnan(self.theta)
-    
+
     def __bool__(self):
         """
         Implement the logical bool test if a Angle is valid. True is self.n != Nan
         """
         return not math.isnan(self.theta)
-    
-    
+
+
 
     def setDegrees(self,theta = 0.0, psi = 0.0):
         """
@@ -1535,12 +1614,12 @@ class Angle(object):
 
     def random(self):
         """
-        Set the current angle to random with theta in range 0 -> pi and psi is range 0 - 2pi 
+        Set the current angle to random with theta in range 0 -> pi and psi is range 0 - 2pi
         """
-        self.theta = random.uniform(0.0,math.pi)
-        self.psi = random.uniform(0,2.0*math.pi)
+        self.theta = uniform(0.0,math.pi)
+        self.psi = uniform(0,2.0*math.pi)
         return self
- 
+
 #
 class Axis3d(object):
     """
@@ -1558,7 +1637,7 @@ class Axis3d(object):
         param u3 Unit3d u3 unit vectors (defaults to (0,0,1)
         OR
         u1_or_axis list[] of three vectors
-        
+
         Note:      supplied u_i vectors will be automatically normalsied
         """
         self.origin = Vector3d(origin)
@@ -1571,7 +1650,7 @@ class Axis3d(object):
             self.axis.append(Unit3d(u2))
             self.axis.append(Unit3d(u3))
     #
-    #    
+    #
     def __repr__(self):
         """
         Implement the repr() method to show state of axis"
@@ -1587,7 +1666,7 @@ class Axis3d(object):
         param vec Vector3d to be transformned
         return new Vector3d in the new axis
         """
-        
+
         if isinstance(vec,Unit3d):
             x = vec.dot(self.axis[0])   # x component
             y = vec.dot(self.axis[1])   # y component
@@ -1599,7 +1678,7 @@ class Axis3d(object):
             y = v.dot(self.axis[1])   # y component
             z = v.dot(self.axis[2])   # z component
             return Vector3d(x,y,z)
-        
-        
-        
+
+
+
 
