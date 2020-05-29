@@ -69,13 +69,7 @@ Class to handle a doublet with all parameters specified in the constructor.
 .. autoclass:: poptics.lens.Doublet
    :members:
 
-Prism Class
-===========
 
-Class to implement a glass prism with methods to calcualte resolution, minimum deviation.
-
-.. autoclass:: poptics.lens.Prism
-   :members:
 
 Eye Class
 =========

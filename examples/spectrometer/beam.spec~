@@ -1,0 +1,8 @@
+#       Trail specometer setup file
+#
+point: 0,0,100
+angle: 45
+height: 87
+beam: 8.3
+setup: 0.85
+

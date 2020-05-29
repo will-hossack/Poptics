@@ -2,16 +2,14 @@
 Set of classes to implement various types lenses, being lists of surfaces, with additional
 method to extract the geomertic parameters in a simple way.
 """
-from poptics.surface import OpticalPlane,FlatSurface,ImagePlane,CircularAperture,IrisAperture,\
+from poptics.surface import OpticalPlane,ImagePlane,CircularAperture,IrisAperture,\
     AnnularAperture,SphericalSurface,QuadricSurface,ParabolicSurface,SphericalImagePlane
 from poptics.matrix import ParaxialPlane,ParaxialMatrix,DielectricMatrix,ParaxialGroup
-from poptics.vector import Vector3d,Unit3d,Angle
-from poptics.ray import IntensityRay
+from poptics.vector import Vector3d
 from poptics.wavelength import getDesignWavelength,AirIndex,MaterialIndex,CauchyIndex,PhotopicPeak
 import optics.analysis as ana     # This needs fixed
 import poptics.tio as tio
 from matplotlib.pyplot import plot
-import math
 from os.path import join
 from importlib.resources import path
 
@@ -21,9 +19,9 @@ with path("poptics","lenses") as p:
 def setCurrentLens(lens):
     """
     Function to set the Current Lens or OpticalSystem, it is held in global CurrentLens
-    This is mainly used for GUI interface. 
-    
-    Currentlens defaults to a default SimpleSinglet() 
+    This is mainly used for GUI interface.
+
+    Currentlens defaults to a default SimpleSinglet()
 
     :param lens: the lens or a filename, if it is a str, it will try and open the DataBaseLens of this type.
     :type lens: OpticalGroup or extending class.
@@ -35,7 +33,7 @@ def setCurrentLens(lens):
         CurrentLens = lens
 
 def getCurrentLens():
-    """ 
+    """
     Function to get the current default lens, if this is not
     overriddent it is initally set to the default SimpleSinglet()
     This is typically used in the GUI interface
@@ -60,22 +58,22 @@ class OpticalGroup(list):
     :param group_pt: The Group reference point in global coordinates, (Defaults = 0,0,0)
     :type grout_pt: Vector3d or float
     :param \*args: list of Surfaces to be added to the OpticalGroup in order
-    
+
 
     """
 
     def __init__(self,group_pt = Vector3d(),*args):
         """
         Constrtructor to make an OpticalGroup and add any Surfaces supplied in the argument list.
-       
+
         """
         list.__init__(self)
-        
+
         self.title = "Optical Group"        # Identify title (for user identification)
         self.aperture = None                # Aperture when added
         self.iris = None                    # Variable iris aperture when added
         self.paraxial = None                # associated paraxial group (auto added)
-        self.wavelength = getDesignWavelength()         # Default wavelength 
+        self.wavelength = getDesignWavelength()         # Default wavelength
         self.group = None                   # Allow to be member of an other group
         self.setPoint(group_pt)             # Us method that does tidy up as well
         #
@@ -88,21 +86,21 @@ class OpticalGroup(list):
         """
         Returm basic information by str() typically overwritten in extending classes.
         """
-        return "pg: {0:s} t: {1:s} sn : {2:s}".format(str(self.point),self.title,str(len(self))) 
-            
+        return "pg: {0:s} t: {1:s} sn : {2:s}".format(str(self.point),self.title,str(len(self)))
+
     #
     def __repr__(self):
         """
         Implement repr()
         """
         return "{0:s}: ".format(self.__class__.__name__) + str(self)
-    
-        
+
+
 
     def getInfo(self):
         """
         Get a full in for of the group + all its component surfaces.
-        
+
         :return: Full detauils as formatted string.
 
         """
@@ -111,8 +109,8 @@ class OpticalGroup(list):
             st += "\n{0:s}".format(repr(s))
 
         return st
-    
-    
+
+
     def setPoint(self,pt):
         """
         Method to set/reset the group point either with float, int or ray.Position
@@ -149,7 +147,7 @@ class OpticalGroup(list):
     #
     def add(self,surface):
         """
-        Method to add a Surface to the end of the OpticalGroup, it also updates the 
+        Method to add a Surface to the end of the OpticalGroup, it also updates the
         .group variable is the Surface.
 
         :param surface: Surface to be appended.
@@ -165,7 +163,7 @@ class OpticalGroup(list):
             sl = list(surface)                      # Make local list copy
             for s in sl:
                 self.add(s.makeStandAlone())
-            
+
         else:
 
             self.append(surface)
@@ -191,11 +189,11 @@ class OpticalGroup(list):
         """
         for s in self:
             s.scale(a)
- 
+
         self.paraxial = None
         return self
-        
-    #      
+
+    #
     def planePair(self,mag, xsize = 100.0, ysize = None , wave = None):
         """
         Get the object / image paraxial plane pair for a specified imaging magnification and object plane size.
@@ -243,13 +241,13 @@ class OpticalGroup(list):
         mag = pm.setWithPlanes(pobj,pima)                        # Set the planes
         pt = self.getPoint()                                     # get and update point to  move lens
         pt.z = pm.inputPlane()
-        self.setPoint(pt)     
+        self.setPoint(pt)
         xsize *= abs(mag)
         ysize *= abs(mag)
         ima.setSize(xsize,ysize)
         return mag
 
-        
+
     def imagePoint(self,op,wave = None):
         """
         Method to give three-dimensional image of a point in object space in global coordinates using the ideal paxial
@@ -265,7 +263,7 @@ class OpticalGroup(list):
         p =  pm.imagePoint(op)
         return Vector3d(p.x + self.point.x, p.y + self.point.y, p.z)
 
-    
+
     def entranceAperture(self):
         """
         Get the entrance aperture, begin circular aperture at the edge of the first element.
@@ -320,17 +318,17 @@ class OpticalGroup(list):
         mat = ParaxialMatrix()           # Start with unit matrix
         if first >= len(self):
             raise IndexError("lens.OpticalGroup.paraxialMatrix, index out of range")
-        
+
         if first == 0 :
             z = 0
         else:
             z = self[first].point.z               # Start point
-        nl = AirIndex().getValue(wave) 
+        nl = AirIndex().getValue(wave)
         if first > 0:
             s = self[first-1]
             if s.type == 1:
                 nl = s.refractiveindex.getValue(wave)
-        
+
         if last == -1:
             last = len(self)
 
@@ -346,11 +344,11 @@ class OpticalGroup(list):
                 mat *= m                                       # add surface
                 z = zp
                 nl = nr
-        #     
+        #
         return mat
-        
-            
-        
+
+
+
 
     def paraxialGroup(self,wave = None):
         """
@@ -372,10 +370,10 @@ class OpticalGroup(list):
             ex = self.exitAperture()
             #  Make Paraxial Group with matching ref point, blank matrix cortect input/output heights
             self.paraxial = ParaxialGroup(self.point.z,mat,en.maxRadius,ex.maxRadius)
-            
-        
+
+
         return self.paraxial
-            
+
 
     def draw(self):
         """
@@ -402,21 +400,21 @@ class Lens(OpticalGroup):
     :param group_pt: the group point, Defauts = (0,0,0)
     :type group_pt: Vector3d or float
     :param \*args: list of OpticalSurfaces
-    
+
     """
-    
+
     def __init__(self,group_pt,*args):
         """
         Constucructor to make a Lens and add any Surfaces supplied in the argument list.
         """
         OpticalGroup.__init__(self,group_pt,*args)
-    
+
 
     def cardinalPoints(self,wave = None):
         """
-        Method to get the six cardinal point of the lens system in global coordinates as a list of Vector3d. 
+        Method to get the six cardinal point of the lens system in global coordinates as a list of Vector3d.
         The z componts come from ParaxialGroup.cardinalPoints() while the x/y componets are x/y components of the OpticalGroup.
-        
+
         :param wave: the wavelength, (Default = wl.Design)
         :type wave: float
         :return: list of six Vector3d as specified below,.
@@ -452,29 +450,29 @@ class Lens(OpticalGroup):
         matrix = self.paraxialMatrix(wave,0,ia)
         matrix.inverse()
         p = self.aperture.getPoint()                # Position of aperture in global
-        p.z += matrix.thickness - matrix.B/matrix.D # Location 
+        p.z += matrix.thickness - matrix.B/matrix.D # Location
         mag = abs(matrix.A - matrix.C*matrix.B/matrix.D) # Mag
 
         return CircularAperture(p,mag*self.aperture.maxRadius)
 
-        
+
 
     def exitPupil(self,wave = None):
         """
         Get the exit pupil, being the image of the apreture
-        """ 
+        """
         if self.aperture == None:
             return self.exitAperture()
 
         ia = self.index(self.aperture)
         matrix = self.paraxialMatrix(wave,ia,-1)
         p = self.aperture.getPoint()                # Position of aperture in global
-        p.z += matrix.thickness - matrix.B/matrix.D # Location 
+        p.z += matrix.thickness - matrix.B/matrix.D # Location
         mag = abs(matrix.A - matrix.C*matrix.B/matrix.D) # Mag
 
         return CircularAperture(p,mag*self.aperture.getRadius())
 
-        
+
 
 
     def setIris(self,ratio):
@@ -493,7 +491,7 @@ class Lens(OpticalGroup):
     def backFocalLength(self, wave = None):
         """
         Method to get the back focal length calculated by paraxial matrix methods, which for positive lens will be +ve.
-        
+
         :param wave:  specified wavelength (default is wl.Design).
         :type wave: float
         :return: the focal length.
@@ -505,7 +503,7 @@ class Lens(OpticalGroup):
     def frontFocalLength(self, wave = None):
         """
         Method to get the front focal length calculated by paraxial matrix mecthods, which for positive lens will be +ve.
-        
+
         :param wave:  specified wavelength (default is wl.Default).
         :type wave: float
         :return: the focal length.
@@ -514,8 +512,8 @@ class Lens(OpticalGroup):
         pm = self.paraxialGroup(wave)
         return pm.backFocalLength()
 
-    
-        
+
+
     def setFocalLength(self,f,wave = None):
         """
         Method to set the geometric focal length of the lens by scaling. This assumes that the lens is
@@ -587,7 +585,7 @@ class Lens(OpticalGroup):
         zplane = pm.backPrincipalPlane()
         return OpticalPlane(Vector3d(self.point.x,self.point.y,zplane))
 
-    
+
     def frontNodalPoint(self,wave = None):
         """
         Get the front nodal point as ray.Position in gobal cordilanes
@@ -632,9 +630,9 @@ class Lens(OpticalGroup):
                 leftindex = rightindex
         return ps
 
-    
 
-    
+
+
     def draw(self,planes = True, legend = False):
         """
         Method to draw the surfaces and add the paraxial planes is requested.
@@ -647,12 +645,12 @@ class Lens(OpticalGroup):
             s.draw()
         if planes:
             self.paraxialGroup()    # Force it to be formed
-            self.paraxial.draw(legend) 
+            self.paraxial.draw(legend)
 
 
 class Singlet(Lens):
     """
-    Class to implement a singlet lens with simpler interface than OpticalGroup or lens and additional methods to alter the 
+    Class to implement a singlet lens with simpler interface than OpticalGroup or lens and additional methods to alter the
     lens surfaces. The default is a 10mm bicovex lens of glass BK7 with focal length of 97mm.
 
     :param pt_or_z: the group point (Default =( 0.0,0.0,0.0))
@@ -671,21 +669,21 @@ class Singlet(Lens):
     def __init__(self, pt_or_z = 0.0, cl = 0.01 , t= 5.0 ,cr = -0.01 ,rad = 10.0,index= "BK7"):
         """
         Basic constructor for Singlet
-        
+
         """
         Lens.__init__(self,pt_or_z)
-        
+
         if isinstance(index,str):                        # Look index is given string key
             index = MaterialIndex(index)
 
-        sl = SphericalSurface(0.0,cl,rad,index)        # Front surface at 0.0 
+        sl = SphericalSurface(0.0,cl,rad,index)        # Front surface at 0.0
         self.add(sl)
         sr = SphericalSurface(t,cr,rad,AirIndex())  # back surface at t
         self.add(sr)
 
         self.minThickness = 2.0                            # Sanity thickness
 
-        
+
     def __str__(self):
         """
         Overwrite of str for a singlet.
@@ -707,7 +705,7 @@ class Singlet(Lens):
     def setCurvatures(self,front= None,back = None):
         """
         Re-set the front and back curvatues of the lens buy keeps other parameters the same.
-        
+
         :param front: the front curvature
         :type front: float
         :param back: the back curvature
@@ -725,12 +723,12 @@ class Singlet(Lens):
         """
         Method to invert the lens by swapping left and right curvatures. Radius and location is not changed.
 
-        :return: self but inverted. 
+        :return: self but inverted.
         """
         self.setCurvatures(-self[1].curvature,-self[0].curvature)
         return self
 
-    
+
     def setFocalLength(self,fl, fixedradius = False, wave = None):
         """
         Set the focal length by scaling with the option to retain the current radius. This overwrites the method in Lens.
@@ -770,7 +768,7 @@ class Singlet(Lens):
         self[1].maxRadius = abs(r)
         self.paraxial = None
         return self
-        
+
 
     def setBend(self,bend = 0.0, fixedfocal = False ):
         """
@@ -799,7 +797,7 @@ class Singlet(Lens):
                 beta = 0.0
         else:
             beta = float(bend)
-        
+
         f = self.backFocalLength()
         c = self[0].curvature - self[1].curvature
         self.setCurvatures(0.5*c*(beta + 1.0),0.5*c*(beta - 1.0))
@@ -821,7 +819,7 @@ class Singlet(Lens):
         """
         Method to set the centre thickness by moving the back surface. This will typically change the focal length.
         It will also check that the centre or edge thickness is not below the citera set in self.minThickness = 2mm
-        
+
         :param t: the centre thickness, if set to 0.0 will make lens as thin as possible so that edge or central.
         :type t: float
 
@@ -840,7 +838,7 @@ class Singlet(Lens):
     def getEdgeThickness(self):
         """
         Get the edge thickness of the lens
-        
+
         :return: the edge thickness in mm
 
         """
@@ -858,7 +856,7 @@ class Singlet(Lens):
         t = max(t,self.minThickness)
         et = self.getEdgeThickness()
         ct = self.getThickness()
-        move = t - et           
+        move = t - et
         if ct + move < self.minThickness: # Too thin in centre
             move = self.minThickness - ct
 
@@ -885,7 +883,7 @@ class Singlet(Lens):
     def setParameters(self,focal,radius,thick = 0.0, wave = None):
         """
         Method to set the normal optical paramteters of the current lens by scaling, the bend is retained.
-        
+
         :param focal: The target focal length in mm
         :type focal: float
         :param radius: the radius
@@ -897,7 +895,7 @@ class Singlet(Lens):
 
         Note this is itterative since that all repend on each other in a non-lienar way !
         """
-        while abs(self.backFocalLength(wave) - focal) > abs(focal*1.0e-6) : 
+        while abs(self.backFocalLength(wave) - focal) > abs(focal*1.0e-6) :
             self.setFocalLength(focal,wave)   # scale to get focal length right
             self.setRadius(radius)            # Set correct radius
             self.setThickness(thick)          # Optimise thickness
@@ -912,7 +910,7 @@ class Singlet(Lens):
         token = string.split()
         ntokens = len(token)
         next = 0
-    
+
         #      Process tokens on order
 
         while next < ntokens:
@@ -945,14 +943,14 @@ class Singlet(Lens):
                 next += 1
                 t = float(token[next])
                 next += 1
-                self.setThickness(t)   
+                self.setThickness(t)
             elif token[next].startswith("index"):
                 next += 1
                 index = MaterialIndex(token[next])
                 next += 1
                 self[0].refractiveindex = index
 
-                
+
             else:
                 print("Unknown token")
 
@@ -979,17 +977,17 @@ class Singlet(Lens):
         plot([zf,zb],[y,y],"k",lw=2.0)  # Horizontal lines at edge
         plot([zf,zb],[-y,-y],"k",lw=2.0)
 
-        
+
         if planes:                     # Add the planes if wanted
             self.paraxialGroup()       # Force group to be formed
             self.paraxial.draw(legend)
 
-        
-        
 
-class SimpleSinglet(Singlet):        
+
+
+class SimpleSinglet(Singlet):
     """
-    Class to make a simple singlet with specified focal length, radius, type / bend 
+    Class to make a simple singlet with specified focal length, radius, type / bend
 
     :param pt_or_z: location of lens, either ray.Position or location on z-axis (default = 0.0)
     :type pt_or_z: Vector3d or float
@@ -1006,7 +1004,7 @@ class SimpleSinglet(Singlet):
     def __init__(self,pt_or_z = 0.0 ,f = 100.0 ,r = 10.0 ,bend = 0.0, index = "BK7"):
         """
         Simple lens:
-       
+
         """
         if isinstance(bend,str):
             bend = bend.lower().strip()
@@ -1019,20 +1017,20 @@ class SimpleSinglet(Singlet):
             else:
                 print("Simple single with unknown shape parameter, setting to biconvex")
                 bend = 0.0
-            
+
         n = 1.51                  #   Inital guess at parameters  and index and c
-        c = 1.0/(2.0*f*(n - 1))   
+        c = 1.0/(2.0*f*(n - 1))
         t = 0.25*r
         Singlet.__init__(self,pt_or_z,c,t,-c,r,index) # Make a biconvex lens
-        self.setBend(bend)                            # Bend to right shape 
+        self.setBend(bend)                            # Bend to right shape
         self.setParameters(f,r,0.0)                   # Set the actual parameters.
-        self.title  = "Simple Singlet" 
+        self.title  = "Simple Singlet"
 
 CurrentLens = SimpleSinglet()        # Set package default to simple signlet
 
 class Doublet(Lens):
     """
-    Class to implement a achromatic double lens with simpler interface than OpticalGroup and additional 
+    Class to implement a achromatic double lens with simpler interface than OpticalGroup and additional
     method to alter the lens. The default is BK7 / F4 Franhoffer doublet with biconvex crown lens, flat back surface, 10mm diameter and focal length of 106mm
 
     :param pt_or_z: the group point (default = 0.0)
@@ -1059,17 +1057,17 @@ class Doublet(Lens):
                  flintindex = "F4"):
         """
         Basic constructor for Doublet
-        
+
         """
         Lens.__init__(self,pt_or_z)
-        
+
         if isinstance(crownindex,str):                        # Lookup  crownindex if given string key
             crownindex = MaterialIndex(crownindex)
         if isinstance(flintindex,str):                        # Lookup flintindex if given string key
             flintindex = MaterialIndex(flintindex)
 
         #           Add the three surfaces
-        sl = SphericalSurface(0.0,cl,rad,crownindex)        # Front surface at 0.0 
+        sl = SphericalSurface(0.0,cl,rad,crownindex)        # Front surface at 0.0
         self.add(sl)
         sm = SphericalSurface(tf,cm,rad,flintindex)         # Common middle surface
         self.add(sm)
@@ -1081,8 +1079,8 @@ class Doublet(Lens):
         #
     def invert(self):
         """
-        Method to invert the Doublet 
-        
+        Method to invert the Doublet
+
         """
         self[0].curvature,self[2].curvature = -self[2].curvature,-self[0].curvature
         self[1].curvature = -self[1].curvature
@@ -1153,7 +1151,7 @@ class Doublet(Lens):
         :param: front: the front curvature. (Default =  None) (not changed)
         :param centre: the centre curvature (Default = None)
         :param back: the back curvature (Default = None)
-        
+
         """
 
         if front != None:
@@ -1198,17 +1196,17 @@ class Doublet(Lens):
         if planes:                     # Add the planes if wanted
             self.paraxialGroup()
             self.paraxial.draw(legend)
-        
-        
+
+
 #
 class Eye(Lens):
     """
     Class to model the eye using values from Hyperphysics and guesses at Abbe Numbers
     for the eye lenses
-    
+
     :param pt: group point of eye, front surface of cornea. (Defauylt = 0.0)
     :type pt: Vector3d or float.
-    
+
     :
     """
     def __init__(self,pt = 0.0, pixels = 0):
@@ -1227,27 +1225,27 @@ class Eye(Lens):
         #
         self.add(SphericalSurface(0.0, 0.13774, 4.0, CauchyIndex(1.376,50.0)))
         self.add(SphericalSurface(0.45, 0.17606, 4.0, CauchyIndex(1.336,53.0)))
-        
-        
+
+
         #                      Add pupil as a iris aperture of 2.5 mm radius
         #
         self.add(IrisAperture(3.0,self.pupilSize))
-        
+
         #                      Add cytstaline lens with default paramters
         #
         self.add(SphericalSurface(self.lensfrontposition, self.lensfrontcurvature, 3.0,\
                                       CauchyIndex(1.406,50.0)))
         self.add(SphericalSurface(self.lensbackposition, self.lensbackcurvature, 3.0, \
                                       CauchyIndex(1.337,53.0)))
-            
+
         # Record the maximum back focal length
         self.maxFocalLength = self.backFocalLength(PhotopicPeak)
-                    
-        #                      Find back focal plane at peak sensitivity 
-        
-    
+
+        #                      Find back focal plane at peak sensitivity
+
+
         bfp = self.paraxialGroup(PhotopicPeak).backFocalPlane() - self.point.z
-        
+
         #                      Add in curved image plane as retina (curve of 1/12 mm)
         if pixels == 0:
             self.retina = SphericalImagePlane(bfp,-8.333e-2,4.0)
@@ -1259,20 +1257,20 @@ class Eye(Lens):
     def getRetina(self):
         """
         Get the eye retina
-        
+
         """
         return self.retina
 
 
     def accommodation(self,a):
         """
-        Method to simulate accomodation by altering the thickness and curvatutes of 
+        Method to simulate accomodation by altering the thickness and curvatutes of
         the crystaline lens
-        
+
         :param a: the accomodation parameter
         :type a: float
-        
-        
+
+
         """
         t = self.lensbackposition - self.lensfrontposition             # Thickness of lens
         cratio = self.lensfrontcurvature/abs(self.lensbackcurvature)   # Ratio of curvatutes
@@ -1282,10 +1280,10 @@ class Eye(Lens):
         #
         #               form the new front and back positions by scaling the front/back surfaces
         #               and moving the back surfacebackward
-        frontposition = centre - ft                              
+        frontposition = centre - ft
         backposition = centre + a*bt
         #
-        #               Increase the curvatures by a**3 (impirical) give almost linear 
+        #               Increase the curvatures by a**3 (impirical) give almost linear
         #               realtion between a and focal length
         frontcurve = self.lensfrontcurvature*a**3
         backcurve = self.lensbackcurvature*a**3
@@ -1297,40 +1295,40 @@ class Eye(Lens):
 
         self.paraxial = None
         return self
-    
+
     def setFocalLength(self,f):
         """
         Method to set the local length by chaning the accomodation using an impirical fit
-        :param f: the focal length 
+        :param f: the focal length
         :type f: float
-        
+
         """
         if f > self.maxFocalLength:
             print("Cannon exceed maximum focal length")
             return self
-        
+
         #    Use fitted polynomial to concered focal lenth to accomodatio.
         acc = lambda f :  -1.51431847e-04*f**3 + 9.43155993e-03*f**2 - 2.57653636e-01*f + 3.73705241e+00
-        
+
         a = acc(f)
         self.accommodation(a)
         return self
-        
+
 
 
     def setNearPoint(self,distance):
         """
         Method to use the accommoation to set the NearPoint, this needs be a simple itterative
         scheme since floal length an principal planes move.
-        
+
         :param distance: near point distance from front Nodal point in mm.
         :type distance: float
         :return: float the accommodation parameter.
-        
+
         """
         #                     Fine obect point wrt to front nodal
         opt = Vector3d(self.frontNodalPoint(PhotopicPeak) - Vector3d(0,0,distance))
-    
+
         da = 0.1
         a = 1.1           # Initial guess
         while True:
@@ -1340,20 +1338,20 @@ class Eye(Lens):
             delta = ipt.z - self.retina.point.z
             if abs(delta) < 1e-4:
                 break
-                
+
             if delta > 0 and da < 0:    # Reverse on overshoot and / step by 3
                 da = -da/3.0
             if delta < 0 and da > 0:
                 da = -da/3.0
-            
-            a += da                     # Update 
+
+            a += da                     # Update
 
         return a
 
 
 class DataBaseLens(Lens):
     """
-    Class to read lens from input file 
+    Class to read lens from input file
     """
 
     def __init__(self,fn = None):
@@ -1364,7 +1362,7 @@ class DataBaseLens(Lens):
 
         If this is no filename given then the user will me prompted via tio openFile.
         """
-        
+
         Lens.__init__(self,0.0)         # Create a blank lens
 
         #
@@ -1374,13 +1372,13 @@ class DataBaseLens(Lens):
             #lensfile = tio.openFile("Lens file","r","lens")
             fn = tio.getFilename("Lens file","lens")
         if not fn.endswith("lens"):        # Append ".lens" if not given
-                fn += ".lens" 
-                
+                fn += ".lens"
+
         if not fn.startswith("/"):
             fn = join(LensPath,fn)
-            
+
         lensfile = open(fn,"r")
-        
+
         """else:
             fn = tio.getExpandedFilename(fn)   # Sort out logicals
             if not fn.endswith("lens"):        # Append ".lens" if not given
@@ -1393,7 +1391,7 @@ class DataBaseLens(Lens):
             line = line.strip()
             if not line.startswith("#") and len(line) > 0:   # Kill comments and blanks
                 token = line.split()
-                
+
                 if token[0].startswith("title"):              # Deal with title
                     self.title = str(token[1])
 
@@ -1406,7 +1404,7 @@ class DataBaseLens(Lens):
                     r = float(token[3])                       # radius
                     s = IrisAperture(p,r,1.0)
                     self.add(s)
-                    
+
                 elif token[0].startswith("circular"):         # Circular aperture
                     p = float(token[1])                       # z-poistion
                     r = float(token[3])                       # radius
@@ -1417,7 +1415,7 @@ class DataBaseLens(Lens):
                     p = float(token[1])                       # z-poistion
                     inner = float(token[3])                   # inner radius
                     outer = float(token[4])                   # outer radius
-                    s = AnnularAperture(p,inner,outer) 
+                    s = AnnularAperture(p,inner,outer)
                     self.add(s)
 
                 elif token[0].startswith("spherical"):        # Spherical surface
@@ -1426,7 +1424,7 @@ class DataBaseLens(Lens):
                     r = float(token[5])                       # max radius
                     if token[6].startswith("index"):          # refrective index
                         index = MaterialIndex(token[7])
-                        s = SphericalSurface(p,c,r,index) 
+                        s = SphericalSurface(p,c,r,index)
                     elif token[6].startswith("mirror"):       # else its a mirror
                         s = SphericalSurface(p,c,r)
                     else:
@@ -1462,237 +1460,18 @@ class DataBaseLens(Lens):
 
                 else:
                     print("Unknown token : " + str(token[0]))
-                    
+
             lensfile.close()             # close file
 
 
 
-class Prism(OpticalGroup):
-    """
-    Class to make a simple prism being an equilateral triangle with the 
-    top of the prism being vertical and the base being parallel to the optical
-    axis. 
-    
-    :param group_pt: the centre of the prism (Default = (0,0,0))
-    :type group_pt: Vector3d or float
-    :param angle: prism angle in degrees (Default = 60)
-    :type angle: float
-    :param height: height of prism from base to peak in mm (Default = 40)
-    :type height: float
-    :param index: the refactive index (Default = "BK7")
-    :type index: RefractiveIndex or str
-    
-    """
-    def __init__(self,group_pt = 0.0, angle = 60.0, height = 40.0, index = "BK7"):
-        OpticalGroup.__init__(self,group_pt)
 
-        # Make the prism from two FlatSurfaces at suitable positions and
-        # surface normals
 
-        if isinstance(index,str):        # Sort out index
-            self.n = MaterialIndex(index)
-        else:
-            self.n = index
-        
-        #       Variable needed below
-        self.height = float(height)
-        self.angle = math.radians(angle)    # Hold angle in radians
-        
-        #        Make surface normals to front and back faces
-        fn = Unit3d(Angle(2*math.pi - self.angle/2))
-        bn = Unit3d(Angle(self.angle/2))
-        
-        #         Poistion of front and back surfaces
-        p = height*math.tan(self.angle/2)/2
-        
-        #         Make the two surfaces and add then to the self (an OpticalGroup)
-        #         Not need to specify type are refracting.
-        front = FlatSurface(-p,fn,type = 1,index = self.n)
-        self.add(front)
-        back = FlatSurface(p,bn,type=1,index = AirIndex())
-        self.add(back)
-        
-    def __str__(self):
-        """
-        The str function
 
-        :return: inrmation on the prism
-        """
-        return "{0:s} a: {1:5.3f} h: {2:5.3f} n: {3:s}".format(str(self.getPoint()),\
-                math.degrees(self.angle),self.height,self[0].refractiveindex.title)
-        
-    def minDeviation(self,wave = None):
-        """
-        Get the angle of minium deviation at specified wavelength.
-        
-        Note this needs to take into account the AirIndex used in the package.
 
-        :param wave: the wavelength (Default = wl.Default)
-        :type wave: float
-        :return: the minimum deviatation as a float in radians.
 
-        """
-        a = AirIndex().getValue(wave)
-        nval = self.n.getValue(wave)/a    # Correct for air index
-        sa = nval*math.sin(self.angle/2)
-        s = math.asin(sa)
-        return 2*s - self.angle           # Return radians.
-    
-    
-    def maxResolution(self,wave = None):
-        """
-        Get the maximum resolution at specifed wavelength at angle of 
-        minimum deviation. This is given by d dn/d lambda where d is the maximium 
-        pathlength difference given by the size of the prism.
-        
-        :param wave: the wavelength
-        :return: maximum resolution lambda / d lambda as float
-        """
 
-        d = 2000.0*self.height*math.tan(self.angle/2) # Max pathlength in microns.
-        dn = self.n.getDerivative(wave)          # dn/dy of materail
-        return d*dn    # 
-    
-    
-    def resolution(self, radius, wave = None):
-        """
-        Calcualte the resolution for a specifed input beam radius at 
-        angle on minimum deviation. It assumes that the resolution is limited
-        by the beam radius and not the size of the prism.
-        
-        :param radius: radius of input beam
-        :type radius: float
-        :param wave: wavelength
-        :type wave: float
-        :return: resolution lamdba / d lambda as a float
-        
-        """
-        dev = self.minDeviation(wave) 
-        alpha = dev/2 + self.angle/2 
-        
-        #      Form path difference between top and bottom of the beam
-        d = 4*radius*math.sin(self.angle/2)/math.cos(alpha)
-        dmax = 2.0*self.height*math.tan(self.angle/2) # Length of bottom of prism
-        if d > dmax:
-            d = dmax
-            print("Resolution limited by size of prism")
-        
-        
-        dn = self.n.getDerivative(wave)    # dn/d lambda
-        return 1000*d*dn                   # scale to microms
-        
-    
-        
-    def getInputPoint(self):
-        """
-        Get the input point in the centre of the first face
 
-        :return: Point on front face in global coordinates
-        """
-        return self[0].getPoint()
-    
-    def getOutputPoint(self):
-        """
-        Get tyhe ooutput point in the centre of the second surface
-        
-        :return: Point on the back face in global coordinates.
-        """
-        return self[1].getPoint()
-    
-    def getOutputAngle(self,inAngle,wavelength = None):
-        """
-        High level method to get the output angle of a beam given
-        input angle and wavelength.
-        
-        Ths methods traces a ray through the system but hide the mechanics and
-        complications of doing this.
-
-        :param inAngle: input angle in radians (from the optical axis)
-        :type inAngle: float
-        :param wavelength: the wavelength (Default = 0.55)
-        :type wavelength: float
-        :return: output angle in radians (typically -ve) 
-        """
-        #        Get prism point and angle of input at Unit3d
-        #
-        pt = self.getInputPoint()
-        u = Unit3d(Angle(inAngle))
-        #         Make a ray and trace it
-        ray = IntensityRay(pt,u,wavelength)
-        ray *= self
-        a = ray.getAngle()                 # The the ray Angle
-        return a.theta*math.cos(a.psi)     # get in radians allowing for -ve
-            
-    
-    def getWavelength(self, inAngle, outAngle, wavelengths = [0.25,1.0]):
-        """
-        Itterative methiod to get the wavelength given input and output angles.
-        
-        Note if impossible angles given or wavelength goes out of range, error message
-        and NaN returned.
-        
-        :param inAngle: input angle in radians
-        :type inAngle: float
-        :param outAngle: output angle in radians
-        :type outAngle: float
-        :param wavelengths: range of allowable wavelengths [min,max]
-        :type: wavelengths: list of length 2
-        :return: the wavelength as a float, "NaN" if it fails to converge.
-
-        """
-    
-        #        Get prism point and angle of input at Unit3d
-        #
-        pt = self.getInputPoint()
-        u = Unit3d(Angle(inAngle))
-    
-        #         Guess at initial wavelngth
-        wave = (wavelengths[1] - wavelengths[0])/2
-        #         Make input ray at guess wavelength
-        ray = IntensityRay(pt,u,wave)
-    
-        #       Parameters for seaerch
-        delta = 0.1
-        forward = True
-        na = float("inf")   # New angle
-    
-        while abs(na - outAngle) > 1.0e-9/abs(outAngle) :
-            nray = ray*self       #      New Ray through prism
-            na = nray.getAngle()
-            na = na.theta*math.cos(na.psi)    # In radians
-            if na < outAngle:                       # Less that target
-                wave += delta
-                forward = True
-            else:   
-                if forward:                   # Half step
-                    delta *= 0.5
-                forward = False
-                wave -= delta
-            if wave < wavelengths[0] or wave > wavelengths[1]:
-                print("Out of wavelength range :")
-                return float("nan")
-        
-            ray.wavelength = wave             # Update the wavelength of ray
-        
-        return ray.getWavelength()             # End of loop, so success, return value
-        
-    def draw(self):
-        """
-        Method to draw the prism
-
-        :return: None
-
-        """
-        pt = self.getPoint()     # Centre of prism
-        
-        #         Form top,left,right corners
-        top = [pt.z, pt.y + self.height/2]
-        d = self.height*math.tan(self.angle/2)
-        left = [pt.z - d , pt.y - self.height/2]
-        right = [pt.z + d, pt.y - self.height/2]
-        
-        #      Plot them out with plt.plot
-        plot([top[0],left[0],right[0],top[0]],[top[1],left[1],right[1],top[1]],"k",lw=2.0)
 
 
 
@@ -1712,14 +1491,14 @@ class OpticalSystem(Lens):
         for g in args:
             self.add(g)
 
-        
 
-            
+
+
     def add(self,g):
         """
         Method to add a grpup, simple at the moment.
 
-        
+
         """
         if hasattr(g,"iris"):
             if g.iris != None:
@@ -1753,17 +1532,17 @@ class OpticalSystem(Lens):
 
         """
         return self[-1].exitAperture()
-    
+
 
     def setIris(self,ratio,group = None):
         """
         Method to set the system iris of the system, or the iris is a particular group
 
-        :param ratio: the ratio between 0 and 1 
+        :param ratio: the ratio between 0 and 1
         :type ratio: float
         :param group: group with the iris (Default = None)
         :type group: int or None
-        
+
         """
         if isinstance(group,int):       # Specific group
             self[group].setIris(ratio)

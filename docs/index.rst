@@ -24,6 +24,7 @@ Welcome to Poptics's documentation!
    analysis
    zernike
    gui
+   spectrometer
 
 
 

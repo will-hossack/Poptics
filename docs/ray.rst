@@ -94,4 +94,14 @@ various types or RayPencils.
    :members:
 
 
- 
+Gaussian Beam
+=============
+
+Class to implement a Gaussian beam characteristic of a laser. This extends ParaxialRay whuch is typcally along the
+optical axis. There are methos to give the beam characteristics and manipulate the beam with Paraxial Matrices using the
+ABCD theoem.
+
+.. autoclass:: poptics.ray.GaussianBeam
+   :members:
+
+
