@@ -44,12 +44,12 @@ class SurfaceInteraction(object):
     :type index: optics.wavelength.RefractiveIndex
 
     """
-    
+
     def __init__(self,type,point,distance,position,normal,index):
         """
-       
+
         """
-        self.type = type           
+        self.type = type
         self.point = point
         self.distance = distance
         self.position = position
@@ -65,12 +65,12 @@ class SurfaceInteraction(object):
             .format(self.type,str(self.point),self.distance,str(self.position))
         s += "Normal : {0:s}\nRefractiveIndex : {1:s}".format(str(self.normal),repr(self.refractiveindex))
         return s
-        
- 
+
+
 
 class Surface(object):
     """
-    Base class for an arbitrary surface which needs to be extended to be useful. 
+    Base class for an arbitrary surface which needs to be extended to be useful.
     This class defines.surface reference point, surface type
     refractive index on image size (may be None) and membership of optical group.
 
@@ -87,39 +87,39 @@ class Surface(object):
     def __init__(self,pt = 0.0 ,type = Clear, index = None):
         """
         Constructor to form a basic surface
-        
+
         """
-        
+
         self.setPoint(pt)
         self.type = type
         #
         self.group = None
         self.refractiveindex = index
-        
+
 
 
     def __str__(self):
         """     Basic info as str
         """
         return "spt: {0:s} type: {1:d} n: {2:s}".format(str(self.point),self.type,str(self.refractiveindex))
-        
-    
+
+
     def __repr__(self):
         """
         Implement the repr() method
         """
         return "{0:s} ".format(self.__class__.__name__) + str(self)
-        
+
 
     def setPoint(self,pt = 0.0):
         """
         Method to set the surface reference point in a consistent way for all surfaces. The specified point can be copy from
-        Surface, Vector3d, list, truple, Vector2d or scalar. 
-       
-        :param pt: surface point can be Surface, Vector3d, 3 component list/truple, Vector2d with z = 0, float giving (0,0,z), (Default = 0.0) 
+        Surface, Vector3d, list, truple, Vector2d or scalar.
+
+        :param pt: surface point can be Surface, Vector3d, 3 component list/truple, Vector2d with z = 0, float giving (0,0,z), (Default = 0.0)
         :type z_or_v: Vector3d, list[], Vector2d or float
         :return: self
-                           
+
         """
         if isinstance(pt,Surface):
             self.point = pt.point.copy()
@@ -131,7 +131,7 @@ class Surface(object):
             self.point = Vector3d(0.0,0.0,pt)
         else:
             raise TypeError("surface.Surface.setPoint: called with unknown type")
-        
+
         return self
 
 
@@ -151,9 +151,9 @@ class Surface(object):
 
     def scale(self,a):
         """
-        Scale surface, this will scale the surface point only, this is 
+        Scale surface, this will scale the surface point only, this is
         typically extended for more complex sufaces
-        
+
         :param a: scale value
         :type a: float
         :return: self
@@ -165,7 +165,7 @@ class Surface(object):
         """
         Method to get the surface point in global coordinates taking account
         that the Surface my belong to an optics.lens.OpticalGroup
-        
+
         :return: vector.Vector3d the reference point in global coordinates.
 
         Note: this should always be used rather than direct reference to surface.point
@@ -183,7 +183,7 @@ class Surface(object):
         """
         Method to make the Surface standalone, it is removed from any OpticalGroup
         and the reference point is re-set in gobal coordinates.
-        
+
         :return: self
         """
         if self.group != None:
@@ -198,29 +198,29 @@ class Surface(object):
         """
         Abstract class to get normal at specified point which is assume to
         be on the surface.
-        
+
         :param pt: Point where surface normal is calcualted, assumed to be on the surface)
         :type pt: Vector3d
         :return: Unit3d  set to Invalid.
-        
+
         """
         return Unit3d()
-    
+
     def getDistance(self,r,u):
         """
         Astract class to get distance from specified poin
         """
         return float("nan")
 
-    
+
     def getSurfaceInteraction(self,ray):
         """
         Method to get get  surface interaction information for a ray.
-        
+
         :param ray: the Ray
         :type ray: poptics.ray.Ray
         :return: SurfaceInteration with reference point and other parameters invalid
-        
+
         This is abstract surface, so only type, surface point and refarctive index will be valid
         """
         pt = self.getPoint()
@@ -253,10 +253,10 @@ class FlatSurface(Surface):
     """
     #
     #
-    def __init__(self,pt = 0.0, normal = Unit3d(0,0,1), type = Clear,index = None): 
+    def __init__(self,pt = 0.0, normal = Unit3d(0,0,1), type = Clear,index = None):
         """
         Constructor
-       
+
         """
         Surface.__init__(self,pt,type,index)
         self.normal = Unit3d(normal)
@@ -270,18 +270,18 @@ class FlatSurface(Surface):
         return "spt: {0:s} type: {1:d} u: {2:s} n: {3:s}".\
             format(str(self.point),self.type,str(self.normal),str(self.refractiveindex))
 
-        
-        
-    def getNormal(self,pt):
+
+
+    def getNormal(self,pt = None):
         """
         Get surface normal at any point.
-        
+
         :return: surface normal being Unit3d
         """
         return self.normal
 
     #
-    #    
+    #
     def getDistance(self,r,u):
         """
         Get the distance from specifed Postition to the surface
@@ -293,13 +293,13 @@ class FlatSurface(Surface):
         :return: float, the distance
 
         Not normally called by used, usually called via surfaceInteraction()
-        
+
         """
         p = self.getPoint()      # Reference point
         dv = p - r
         dist = self.normal.dot(dv)/self.normal.dot(u)
         return dist
-        
+
 
     def getSurfaceInteraction(self,ray):
         """
@@ -313,9 +313,9 @@ class FlatSurface(Surface):
         distance = self.getDistance(ray.position,ray.director)
         pos = ray.position.propagate(distance,ray.director)
         pt = self.getPoint()
-        
+
         return SurfaceInteraction(self.type,pt,distance,pos,self.normal,self.refractiveindex)
-       
+
 #
 #
 class OpticalPlane(FlatSurface):
@@ -329,13 +329,13 @@ class OpticalPlane(FlatSurface):
     :type type: int
     :param index: refrative index image side of surface, (Default = None)
     :type index: `optics.wavelength.RefractiveIndex`
-    
+
     """
-    
+
     def __init__(self,pt = 0.0 ,type = Clear, index = None):
         """
         Conststrucor for Optical plane
-       
+
         """
         FlatSurface.__init__(self,pt,Unit3d(0,0,1),type,index)
 
@@ -344,8 +344,8 @@ class OpticalPlane(FlatSurface):
         Implement str()
         """
         return "spt: {0:s} type: {1:d} n: {2:s}".format(str(self.point),self.type,str(self.refractiveindex))
-        
-    
+
+
     def surfaceVector(self,pos):
         """
         Method to get the Vector2d in the plane for a specified point, assumed to
@@ -363,7 +363,7 @@ class OpticalPlane(FlatSurface):
     def getSourcePoint(self,pt_or_x,y = None,intensity = 1.0):
         """
         Get the SourcePoint for a specified point in the plane.
-        
+
         :param pt_or_x: Vector2d point in the plane or x component
         :type pt_or_x: Vector2d or float
         :param y: y component (Default = None)
@@ -379,14 +379,14 @@ class OpticalPlane(FlatSurface):
         else:
             x = float(pt_or_x)
             y = float(y)
-        
+
         refpt = self.getPoint()
         x += refpt.x
         y += refpt.y
         return SourcePoint([x,y,refpt.z],intensity)
-    
-    
-    
+
+
+
     def getDistance(self,r,u):
         """
         Get the distance from specifed Postition to the surface
@@ -398,16 +398,16 @@ class OpticalPlane(FlatSurface):
         :return: float, the distance
 
         Not normally called by used, usually called via surfaceInteraction()
-        
+
         """
         pt = self.getPoint()
         d = (pt.z - r.z)/u.z
         return d
-    
+
     def getSurfaceInteraction(self,ray):
         """
         Method to get the SurfaceInteraction information with a Ray
-        
+
         :param ray: the input ray
         :type: poptitcs.ray.IntensityRay
         :return: SurfaceInteraction
@@ -418,9 +418,9 @@ class OpticalPlane(FlatSurface):
         #       Distance calcaultion simplified.
         distance = (pt.z - ray.position.z)/ray.director.z
         pos = ray.position.propagate(distance,ray.director)
- 
+
         return SurfaceInteraction(self.type,pt,distance,pos,self.normal,self.refractiveindex)
-        
+
 
     def getParaxialInteraction(self,ray):
         p = self.getPoint()
@@ -433,18 +433,18 @@ class OpticalPlane(FlatSurface):
         """
         Get the ParaxialGroup of the surface for compatibility, it will be reference point
         and unit matrix.
-        
-        :return: defaylt ParaxialGroup 
+
+        :return: defaylt ParaxialGroup
         """
         pt = self.getPoint()
         return ParaxialGroup(pt.z)
-        
+
 
 
     def incrementSurface(self,delta):
         """
         Get a new optical surface where the reference point is incremented a distance along
-        the optical (z-axis). 
+        the optical (z-axis).
 
         :param delta: The distance incremented along the optical axis
         :type delta: float
@@ -452,7 +452,7 @@ class OpticalPlane(FlatSurface):
 
         """
         return OpticalPlane([self.point.x,self.point.y,self.point.z + delta],self.type,self.refractiveindex)
-        
+
 
     def draw(self,height=10.0,option = None):
         """
@@ -463,7 +463,7 @@ class OpticalPlane(FlatSurface):
         zvals =  [p.z,p.z]
         plot(zvals,yvals,"k",lw=2.0)
 
-    
+
 class CircularAperture(OpticalPlane):
     """
     Class to  implement a circular aperture of fixed radius, rays outside the aperure will be blocked.
@@ -477,7 +477,7 @@ class CircularAperture(OpticalPlane):
     def __init__(self,pt = 0.0 , radius = 1.0):
         """
         Constuctor for a circular aperture
-       
+
         """
         OpticalPlane.__init__(self,pt)
         self.outerRadius = radius
@@ -488,7 +488,7 @@ class CircularAperture(OpticalPlane):
         Implements str()
         """
         return "spt: {0:s} rad: {1:7.3f}".format(str(self.point),self.outerRadius)
-    
+
     def getRadius(self):
         """
         Get the radius, for thiis it is maxRadius
@@ -498,12 +498,12 @@ class CircularAperture(OpticalPlane):
     def scale(self,a):
         """
         Scale aperture, will scale position and radius. if a < 0, then abs(a) is used.
-        
+
         :param a: Scale factor
         :type a: float
 
         """
-        a = abs(a)                       # Allow for 
+        a = abs(a)                       # Allow for
         OpticalPlane.scale(self,a)
         self.outerRadius *= a
         self.maxRadius *=a
@@ -525,11 +525,11 @@ class CircularAperture(OpticalPlane):
     def getSurfaceInteraction(self,ray):
         """
         Method to get back the surface interaction information with a Ray
-        
+
         :param ray: the input ray
         :type ray: poptics.ray.IntensityRay
         :return: SurfaceInteraction
-        
+
         """
         pt = self.getPoint()
         distance = (pt.z - ray.position.z)/ray.director.z
@@ -559,8 +559,8 @@ class CircularAperture(OpticalPlane):
             c = float("nan")
 
         return [self.type,distance,height,c,self.refractiveindex]
-            
-        
+
+
 
 
     def draw(self,option = None):
@@ -591,11 +591,11 @@ class AnnularAperture(CircularAperture):
     :type outerradius: float
 
     """
-    
+
     def __init__(self,pt = 0.0, innerradius = 0.0, outerradius = 1.0):
         """
         Constuctor for a annular circular aperture
-        
+
         """
         CircularAperture.__init__(self,pt,outerradius)
         self.innerRadius = innerradius
@@ -606,7 +606,7 @@ class AnnularAperture(CircularAperture):
         """
         return "spt: {0:s} inner: {1:7.3f} outer: {2:7.3f}".\
             format(str(self.point),self.innerRadius,self.outerRadius)
-    
+
 
     def scale(self,a):
         """
@@ -637,7 +637,7 @@ class AnnularAperture(CircularAperture):
     def getSurfaceInteraction(self,ray):
         """
         Method to get the surface interaction information with a Ray
-        
+
         :param ray: the input ray
         :type ray: :py:class:`optitcs.ray.IntensityRay`
         :return: `SurfaceInteraction`
@@ -656,7 +656,7 @@ class AnnularAperture(CircularAperture):
             u = self.normal
         else:
             u = Blocked
-            
+
         return SurfaceInteraction(self.type,pt,distance,pos,u,self.refractiveindex)
 
 
@@ -702,13 +702,13 @@ class IrisAperture(CircularAperture):
     :param radius: radius of aperture (Default = 1.0)
     :type radius: float
     :param ratio: the faction aperture is opened, (Default = 1.0)
-    
-    """    
-    
+
+    """
+
     def __init__(self,pt = 0.0, radius = 1.0, ratio = 1.0):
         """
         Constuctor for a iris aperture, being a variable radius circular aperture
-       
+
         """
         CircularAperture.__init__(self,pt,radius)
         self.ratio = ratio                   # this typically controlled externally
@@ -730,13 +730,13 @@ class IrisAperture(CircularAperture):
         """
         self.ratio = float(ratio)
         return self
-    
+
     def getRadius(self):
         """
         Get the radius inclduing the ratio.
         """
         return self.outerRadius*self.ratio
-        
+
     #
     def getNormal(self,pos):
         """
@@ -752,11 +752,11 @@ class IrisAperture(CircularAperture):
     def getSurfaceInteraction(self,ray):
         """
         Method to get back the surface interaction information with a Ray
-        
+
         :param ray: the input ray
         :type ray: :py:class:`optitcs.ray.IntensityRay`
         :return: `SurfaceInteraction`
-    
+
         """
         pt = self.getPoint()
         distance = (pt.z - ray.position.z)/ray.director.z
@@ -764,7 +764,7 @@ class IrisAperture(CircularAperture):
 
         dx = pos.x - pt.x
         dy = pos.y - pt.y
-        
+
         radius = self.getRadius()        # Take into account the ratio
         if dx*dx + dy*dy <= radius*radius:
             u = self.normal
@@ -772,7 +772,7 @@ class IrisAperture(CircularAperture):
             u = Blocked
 
         return SurfaceInteraction(self.type,pt,distance,pos,u,self.refractiveindex)
-        
+
 
 
     def getParaxialInteraction(self,ray):
@@ -804,7 +804,7 @@ class IrisAperture(CircularAperture):
         ytopb = [p.y + radius , p.y + self.outerRadius]
         zvalb = [p.z,p.z]
         ylowerb = [p.y - radius, p.y - self.outerRadius]
-        
+
         plot(zvals,ytop,"k",zvals,ylower,"k",zvalb,ytopb,"k",zvalb,ylowerb,"k",lw=2.0)
 
 
@@ -812,10 +812,10 @@ class IrisAperture(CircularAperture):
 
 class KnifeAperture(CircularAperture):
     """
-    Class to give a circular aperture with a moveable "knife edge" or "wire" used in 
+    Class to give a circular aperture with a moveable "knife edge" or "wire" used in
     optical testing.
 
-    :param pt: the surface point 
+    :param pt: the surface point
     :type pt: Vector3d or float
     :param radius: radius of the aperture (default to 1.0)
     :type radius: float
@@ -829,7 +829,7 @@ class KnifeAperture(CircularAperture):
     """
     def __init__(self,pt = 0.0, radius= 1.0 ,knife = 0.0, theta = 0.0, shift = 0.0):
         """
-        
+
         """
         CircularAperture.__init__(self,pt,radius)
         self.setKnife(knife,theta,shift)
@@ -838,7 +838,7 @@ class KnifeAperture(CircularAperture):
     def setKnife(self,knife = 0.0, theta = 0.0, shift = 0.0):
         """
         Set the knife parameters
-        
+
         :param knife: distance of knife edge from axis (Default = 0.0)
         :type knife: float
         :param theta: angle of knife edge wrt to y-axis in radians (Default = 0.0)
@@ -855,12 +855,12 @@ class KnifeAperture(CircularAperture):
     def setWire(self,wire = True, thickness = 0.01):
         """
         Switch to wire rather than knife
-        
+
         :param wire: switch to wire mode (Default = True)
         :type wire: boolean
         :param thickness: thickness of wire (Default = 0.01 mm)
         :type thickness: float
-        
+
         """
         self.wire = wire
         self.thickness = thickness
@@ -872,12 +872,12 @@ class KnifeAperture(CircularAperture):
         """
         return "spt: {0:s} rad: {1:7.3f} knife: {2:7.3f} angle: {3:7.3f} shift: {4:s}".\
             format(str(self.point),self.outerRadius,self.knife,self.theta,str(self.shift))
-        
+
 
     def getSurfaceInteraction(self,ray):
         """
         Method to get back the surface interaction information with a Ray
-        
+
         :param ray: the input ray
         :type ray: :py:class:`optitcs.ray.IntensityRay`
         :return: `SurfaceInteraction`
@@ -928,7 +928,7 @@ class ImagePlane(OpticalPlane):
     def __init__(self,pt = 0.0 ,xsize = 100.00, ysize = None):
         """
         Constructor for ImagePlane
-       
+
         """
         OpticalPlane.__init__(self,pt)
         self.setSize(xsize,ysize)
@@ -944,7 +944,7 @@ class ImagePlane(OpticalPlane):
     def scale(self,a):
         """
         Scale plane, scales both position and size, if a < 0,abs(a) is used.
-        
+
         :param a: the scale parameter.
         :type a: float
 
@@ -989,7 +989,7 @@ class ImagePlane(OpticalPlane):
         yvals =  [p.y + self.ysize/2, p.y - self.ysize/2]
         zvals =  [p.z,p.z]
         plot(zvals,yvals,"k",lw=2.0)
-        
+
 
 
 class QuadricSurface(OpticalPlane):
@@ -1008,12 +1008,12 @@ class QuadricSurface(OpticalPlane):
     :type index: RefractiveIndex or None
 
     """
-                                                                    
+
     #
     def __init__(self, pos, curve, epsilon, radius , index = None):
         """
         Constructor
-       
+
         """
         if index == None:
             OpticalPlane.__init__(self,pos,Reflecting)       # Reflecting
@@ -1030,14 +1030,14 @@ class QuadricSurface(OpticalPlane):
         """
         return "spt: {0:s} type: {1:d} c: {2:7.5f} e: {3:7.5f} rad: {4:6.4f} n: {5:s}".\
             format(str(self.point),self.type,self.curvature,self.epsilon,self.maxRadius,str(self.refractiveindex))
-        
-        
+
+
     def scale(self,a):
          """
          Scale surface, this will scale the position of the OpticalPlane, the
          maxradius and the curvature. If a < 0, then abs(a) will be applied to the plane
          and radius, but the sign of the curfature will be reversed.
-         
+
          :param a:  the scale factor
          :type a: float
 
@@ -1046,11 +1046,11 @@ class QuadricSurface(OpticalPlane):
          self.maxRadius *= abs(a)
          self.curvature /= a
          return self
-     
+
     def getSourcePoint(self,pt_or_x,y = None,intensity = 1.0):
          """
          Get the SourcePoint for a specified point in the plane allowing for curvature.
-        
+
          :param pt_or_x: Vector2d point in the plane or x component
          :type pt_or_x: Vector2d or float
          :param y: y component (Default = Null)
@@ -1065,25 +1065,25 @@ class QuadricSurface(OpticalPlane):
          else:
             x = float(pt_or_x)
             y = float(y)
-            
+
          c = self.curvature
          e = self.epsilon
          rsqr = x*x + y*y
-        
+
          a = 1.0 - c*c*e*rsqr
          if a < 0.0 :
             raise ValueError("ray.QuadricSurface.pointin Plane: impossible surface: c: {0:8.5e} e: {1:8.5} r: {2:8.5e}"\
                              .format(c,e,rsqr))
          else:
             z =  c*rsqr/(1.0 + math.sqrt(a))
-        
+
          refpt = self.getPoint()    # Ref point of plane
          x += refpt.x
          y += refpt.y
          z += refpt.z
-        
+
          return SourcePoint([x,y,z],intensity)
-    
+
 
     def getDistance(self,r,u):
         """
@@ -1102,18 +1102,18 @@ class QuadricSurface(OpticalPlane):
         d = (p.z - r.z)/u.z     # Distance to plane (direct calculation)
         x = r.x + d*u.x - p.x   # x/y Pt in plane
         y = r.y + d*u.y - p.y
-        
+
         c = self.curvature
         eps = self.epsilon
 
         #
-        #         form distance from plane to surface that will NOT fail for curve = 0    
+        #         form distance from plane to surface that will NOT fail for curve = 0
         f = c*(x*x + y*y)
         g = u.z - c*(x*u.x + y*u.y)
         e = c*(1.0 + (eps - 1.0)*u.z*u.z)
         a = g*g - e*f
         #
-        #          trap case of ray missing surface totally....... 
+        #          trap case of ray missing surface totally.......
         if a < 0:
             return float("nan")           # Missed surface
         else:
@@ -1154,7 +1154,7 @@ class QuadricSurface(OpticalPlane):
         c = self.curvature
         e = self.epsilon
         r = self.maxRadius
-        
+
         a = 1.0 - c*c*e*r*r
         if a < 0.0 :
             raise ValueError("ray.QuadricSurface.edgePlane: impossible surface: c: {0:8.5e} e: {1:8.5} r: {2:8.5e}"\
@@ -1178,7 +1178,7 @@ class QuadricSurface(OpticalPlane):
     def getSurfaceInteraction(self,ray):
         """
         Method to get back the surface interaction information with a Ray
-        
+
         :param ray: the input ray
         :type ray: poptics.ray.IntensityRay
         :return: SurfaceInteraction
@@ -1190,18 +1190,18 @@ class QuadricSurface(OpticalPlane):
         x = ray.position.x + d*ray.director.x - p.x   # x/y Pt in plane
         y = ray.position.y + d*ray.director.y - p.y
 
-        
+
         c = self.curvature                            # local variable for c to simply typing.
         eps = self.epsilon
 
         #
-        #         form distance from plane to surface that will NOT fail for curve = 0    
+        #         form distance from plane to surface that will NOT fail for curve = 0
         f = c*(x*x + y*y)
         g = ray.director.z - c*(x*ray.director.x + y*ray.director.y)
         e = c*(1.0 + (eps - 1.0)*ray.director.z*ray.director.z)
         a = g*g - e*f
         #
-        #          trap case of ray missing surface totally....... 
+        #          trap case of ray missing surface totally.......
         if a > 0:
             d += f/(g + math.copysign(math.sqrt(a),g))     # add extra distance, retaining sign
         else:                                              # Flag distance as NaN
@@ -1210,13 +1210,13 @@ class QuadricSurface(OpticalPlane):
 
         #          Get position of ray on surface
         pos = ray.position.propagate(d,ray.director)
-        
+
         #          Now get surface normal at this point
         x = pos.x - p.x       # x/y in plane
         y = pos.y - p.y
 
         if x*x + y*y > self.maxRadius*self.maxRadius:
-            u =  Blocked        # Blocked by max radius 
+            u =  Blocked        # Blocked by max radius
         else:
             x *= -c
             y *= -c
@@ -1258,7 +1258,7 @@ class QuadricSurface(OpticalPlane):
         p = self.getPoint()       # Reference point
         yvals = []                # list of y value
         zvals = []                # list of z vals
-        
+
         c = self.curvature
         e = self.epsilon
 
@@ -1271,8 +1271,8 @@ class QuadricSurface(OpticalPlane):
                 zvals.append(p.z + z)
 
         plot(zvals,yvals,"k",lw=2.0)           # Plot in black
-            
-                
+
+
 class SphericalSurface(QuadricSurface):
     """
     Method to implement a spherical  surface determined by curvature and,this is a QuadricSurface
@@ -1288,7 +1288,7 @@ class SphericalSurface(QuadricSurface):
     :type index: RefractiveIndex or None
 
     """
-    
+
     #
     def __init__(self,pos,curve,radius,index = None):
         """
@@ -1296,7 +1296,7 @@ class SphericalSurface(QuadricSurface):
         """
         QuadricSurface.__init__(self,pos,curve,1.0,radius,index)
 
-        
+
     def __str__(self):
         """
         Implement str()
@@ -1319,16 +1319,16 @@ class SphericalImagePlane(SphericalSurface):
     def __repr__(self):
         """
         Implement repr() for the surface
-        """ 
+        """
         return "surface.SphericalImagePlane({0:s}, {1:8.6f}, {2:7.5f})".\
             format(str(self.point),self.curvature,self.maxRadius)
-        
+
 
 class ParabolicSurface(QuadricSurface):
     """
     Method to implement a parabolic surface determined by curvature and. This is a QudaricSurface
     with epsilon = 0.0
-    
+
     :param pos: the plane reference point
     :type pos: Vector3d or float
     :param curve: the curcature.
@@ -1340,8 +1340,8 @@ class ParabolicSurface(QuadricSurface):
 
 
     """
-    
-    
+
+
     def __init__(self,pos,curve,maxRadius,index = None):
         """
         Constructor

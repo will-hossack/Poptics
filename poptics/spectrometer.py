@@ -465,3 +465,55 @@ class PrismSpectrometer(Prism):
                     print("Sprectometer: illegal key : {0:s}".format(token[0]))
 
         return self
+
+
+class Grating(OpticalGroup):
+    """
+    Class to for a simple diffratcion grating with a transmission grating on
+    a glass substrate
+    """
+
+    def __init__(self,group_pt = 0.0, pitch = 2.0, thickness = 5.0, height = 10.0, angle = 0.0):
+        OpticalGroup.__init__(self,group_pt)
+
+
+        self.height = height
+        self.pitch = pitch
+        n = MaterialIndex("BK7")
+
+        # Surface normal to back and from surfaces
+        u = Unit3d(Angle(-angle))
+        p = 0.5*thickness*u
+        print(str(p))
+
+        front = FlatSurface(-p,u,type = 1,index = n)
+        self.add(front)
+        back = FlatSurface(p,u,type=1,index = AirIndex())
+        self.add(back)
+
+
+    def draw(self):
+
+        fpt = self[0].getPoint()
+        print(str(fpt))
+        bpt = self[1].getPoint()
+        print(str(bpt))
+        sn = self[0].getNormal()
+        print(repr(sn))
+
+        xf = [fpt.z - self.height*sn.y/2, fpt.z, fpt.z + self.height*sn.y/2]
+        yf = [fpt.y + self.height*sn.z/2, fpt.y, fpt.y -self.height*sn.z/2]
+        print(str(xf))
+        print(str(yf))
+
+        plot(xf,yf,"k",lw = 2.0)
+
+        xf = [bpt.z - self.height*sn.y/2, bpt.z, bpt.z + self.height*sn.y/2]
+        yf = [bpt.y + self.height*sn.z/2, bpt.y, bpt.y -self.height*sn.z/2]
+
+        plot(xf,yf,"k",lw = 2.0)
+
+
+
+
+

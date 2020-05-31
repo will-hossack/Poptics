@@ -1,5 +1,5 @@
 """
-Set of classes to deal with optical wavelengths and functions associated with 
+Set of classes to deal with optical wavelengths and functions associated with
 wavelengths including refractive index and spectra.  It aslo handles the default wavelength of the package.
 
 """
@@ -22,7 +22,7 @@ BlueColourMatch = 0.425 #: Colour matching Blue in microns
 GreenColourMatch = 0.53 #: Colour matching Green in microns
 RedColourMatch = 0.65   #: Colour matching Blue in microns
 ScotopicPeak = 0.502819   #: Scotopic peak in microns
-ScotopicWidth = 0.0555317 #: Scotopic width in microns 
+ScotopicWidth = 0.0555317 #: Scotopic width in microns
 PhotopicPeak = 0.5559087  #: Photopic peak in microns
 PhotopicWidth = 0.0599179 #: Photopic with in microns
 Mercury_i = 0.36501    #: Mercury i line in microns
@@ -112,14 +112,14 @@ def getCurrentWavelength():
     """
     return CurrentWavelength
 
-    
+
 def setCurrentWavelength(wave = Green):
     """
     Set the Current Wavelnegth, typically used by GUI interface
     """
     global CurrentWavelength
     CurrentWavelength = wave
-    
+
 
 def getInitialDesignWavelength():
     """
@@ -150,7 +150,7 @@ def setDesignWavelength(w = Green):
     """
     global Design
     Design = float(w)
-    
+
 def getDesignWavelength(wavelength = None):
     """
     Function to get the design wavelength.
@@ -161,7 +161,7 @@ def getDesignWavelength(wavelength = None):
         return Design
     else:
         return float(wavelength)
-    
+
 
 
 FixedAirIndex = False
@@ -181,7 +181,7 @@ def setFixedAirIndex(type = True ,value = 1.0):
     global FixedAirIndexValue
     FixedAirIndex = type
     FixedAirIndexValue = value
-    
+
 
 
 RangeWarning = False             # Global to control range warning messages
@@ -192,14 +192,14 @@ def setRangeWarning(warn):
     """
     global RangeWarning
     RangeWarning = warn
-    
+
 
 #
 class WaveLength(object):
     """
     Abstract class to deal with functions of wavelength.  There is a default
-    constructor to set defaults, typically called by extending classes only there 
-    are no parameters, it just initialises variables. 
+    constructor to set defaults, typically called by extending classes only there
+    are no parameters, it just initialises variables.
 
     There are three local variable to control plotting and information,
 
@@ -210,9 +210,9 @@ class WaveLength(object):
     - self.title = None
 
 
-    """          
+    """
     def __init__(self):
-    
+
         self.valid = True                         # Defaults to True
         self.currentWavelength = float("Nan")     # Default to illegal
         self.currentValue = float("Nan")
@@ -235,26 +235,26 @@ class WaveLength(object):
         return "{0:s} ".format(self.__class__.__name__) + str(self)
 
     def __bool__(self):
-        """ Validity flag  
+        """ Validity flag
         """
         return self.valid
 
-    #         
+    #
     def getValue(self,wave = None ):
         """
         Method to get the current value as the specified wavelength
         param wave the wavelength, this is assumes be a float OR any object
-        that has .wavelength as a float variable. 
+        that has .wavelength as a float variable.
 
         :param wave: wavelength (Defaults = None default, usually 0.55 microns)
         :type wave: float or object.wavelength (in microns) or None
         :return: the value as a float.
 
-        This will cache the value from the last call so if called again with the same 
-        wavelength it will not recalculate. This cache speeds up large calculations 
+        This will cache the value from the last call so if called again with the same
+        wavelength it will not recalculate. This cache speeds up large calculations
         significanlty and works for the supplied index and spectrum classes.
-        This is controlled by self.dynamic, which is set to True will calcualte a 
-        new value for every call. 
+        This is controlled by self.dynamic, which is set to True will calcualte a
+        new value for every call.
 
         This is the normal method to get the value for all classes.
         """
@@ -262,11 +262,11 @@ class WaveLength(object):
         w = getDefaultWavelength(wave)
         #
         #                           If value at this wavelength is know, use it
-        #       
+        #
         if self.dynamic or w != self.currentWavelength:
             self.currentWavelength = w
             self.currentValue = self.__getNewValue__(self.currentWavelength)
-            
+
         return self.currentValue
 
 
@@ -280,24 +280,24 @@ class WaveLength(object):
         :return: the derivative as a float.
 
         """
-        
+
         w = getDefaultWavelength(wave)
         delta = w  / 2000.0
-        
+
         return (self.getValue(w - 2.0*delta) - 8.0*self.getValue(w - delta) + 8.0*self.getValue(w + delta) - \
            self.getValue(w + 2.0*delta))/(12.0*delta)
-           
+
 
     def __getNewValue__(self,wave):
         """
         Abstract iunternal method to get the value at a new wavelength (needs to be defined)
 
-        :param wave: the wavelength 
+        :param wave: the wavelength
         :type wave: float
         :return: the value at this wavelength.
 
         This is not normally called direclty but is called via .getValue()
-        
+
         """
         raise NotImplementedError("wavelength.Wavelength.getNewValue not implemnted, Class is abstract.")
 
@@ -331,7 +331,7 @@ class WaveLength(object):
 
         return out_array
 
-    #         
+    #
     #
     def draw(self,colour='r', derivative = False):
         """
@@ -339,13 +339,13 @@ class WaveLength(object):
 
         - self.minWavelenth (Default 0.35)
         - self.maxWavelength (Default 0.65)
-        
+
         :param colour: colour passed to matplotlib (defaults to 'r')
         :type colour: Color or str
         :param derivative: if True will plot the derivative, (default is False)
         :type derivatice: Bool
         :return: None
-        
+
 
         """
         x = np.linspace(self.minWavelength,self.maxWavelength,self.plotPoints)
@@ -365,7 +365,7 @@ class WaveLength(object):
 #
 class RefractiveIndex(WaveLength):
     """
-    Class RefrativeIndex which extends WaveLength to handle different types of 
+    Class RefrativeIndex which extends WaveLength to handle different types of
     Refrative Index. Class is Abstract, need to be extended to be useful.
     """
     #
@@ -376,7 +376,7 @@ class RefractiveIndex(WaveLength):
         """
         WaveLength.__init__(self)
     #
-    #         
+    #
     def getNd(self):
         """
         Method to get refrative index at the Helium_d line.
@@ -386,7 +386,7 @@ class RefractiveIndex(WaveLength):
         """
         return self.getValue(Helium_d)
     #
-    #          
+    #
     def getNe(self):
         """
         Method to get the refrative index at the Mercury_e line.
@@ -395,7 +395,7 @@ class RefractiveIndex(WaveLength):
 
         """
         return self.getValue(Mercury_e)
-    #          
+    #
     #
     def getVd(self):
         """
@@ -412,12 +412,12 @@ class RefractiveIndex(WaveLength):
             return (nd - 1.0)/(nf - nc)
         else:
             return 0.0               # Non dispersive
-    #    
+    #
     #
     def getVe(self):
         """
         Method to get the Mercury Abbe or Ve number, cacaulted at the Mercury_e, Cadmium_F and Cadmium_C lines.
-        Will return zero if non-dispersive. 
+        Will return zero if non-dispersive.
 
         :return: float  the Ve numbers.
 
@@ -434,7 +434,7 @@ class RefractiveIndex(WaveLength):
     def getType(self):
         """
         Method to get the type number on nnnVVV for format using calculated from the Nd and Vd numbers.
-        
+
         :return: int XXXYYY when nd = 1.XXX and Vd = Y.YY
 
         """
@@ -443,14 +443,14 @@ class RefractiveIndex(WaveLength):
         nd = int(round((nd - 1.0)*1000))
         vd = int(round(vd*10))
         return nd*1000 + vd
-        
+
 #
 #
 class InfoIndex(RefractiveIndex):
     """
     Implment a RefractiveIndex in the format suppled by RefractiveIndex.info website,
     all have common calls.
-    
+
     :param formula: formula type, (1,2,3,5,6 and 7 implementated)
     :type formula: int
     :param wrange: list of two float giving validity range
@@ -461,13 +461,13 @@ class InfoIndex(RefractiveIndex):
     :type name: str
 
     This class is not typically called by the used, the normal intreface is MaterialIndex
-    
+
     """
     def __init__(self,formula,wrange,coef,name = "InfoIndex"):
         """
         Constuctor
-        
-        
+
+
         Format is same as in RefrativeIndex.info database.
         """
         RefractiveIndex.__init__(self)
@@ -492,8 +492,8 @@ class InfoIndex(RefractiveIndex):
         """
         return InfoIndex(self.formula,list(self.R),list(self.C),self.title)
     #
-    #          
-    
+    #
+
     def __getNewValue__(self,wave):
         """
         Method to get the new value as specified wavelength
@@ -501,41 +501,41 @@ class InfoIndex(RefractiveIndex):
         """
         if RangeWarning and (wave < self.R[0] or wave > self.R[1]):
             print("InfoIndex: range warning: {0:7.5f} called but range {1:7.5f} to {2:7.5f}".\
-                  format(wave,self.R[0],self.R[1]))        
+                  format(wave,self.R[0],self.R[1]))
 
         #        Implment the various formula
         #
         if self.formula == 1:               # Sellmeir with Sqr of lower compoent
             n = 1.0 + self.C[0]             # Put in first C (nornmally zero)
-            lSqrInv = 1.0/(wave*wave) 
+            lSqrInv = 1.0/(wave*wave)
             for i in range(1,len(self.C),2):
                 c = self.C[i + 1]
                 n += self.C[i]/(1.0 - lSqrInv*c*c)
-            
+
             return math.sqrt(n)
 
         elif self.formula == 2:             # Sellmeir with Linear lower component.
             n = 1.0 + self.C[0]             # Put in first C (nornmally zero)
-            lSqrInv = 1.0/(wave*wave) 
+            lSqrInv = 1.0/(wave*wave)
             for i in range(1,len(self.C),2):
                 n += self.C[i]/(1.0 - lSqrInv*self.C[i + 1])
-            
+
             return math.sqrt(n)
 
         elif self.formula == 3:            # Polynomial
-            n = self.C[0]                  # Put in first C 
-        
+            n = self.C[0]                  # Put in first C
+
             for i in range(1,len(self.C),2):
                 n += self.C[i]*pow(wave,self.C[i+1])
-               
+
             return math.sqrt(n)
 
 
         elif self.formula == 5:             # Full Cauchy
-            n = self.C[0]                   # Put in first C 
+            n = self.C[0]                   # Put in first C
             for i in range(1,len(self.C),2):
                 n += self.C[i]*pow(wave,self.C[i+1])
-               
+
             return n
 
         elif self.formula == 6:            # Gas index
@@ -553,23 +553,23 @@ class InfoIndex(RefractiveIndex):
                 lSqr *= (wave*wave)
                 n += self.C[i]*lSqr
             return n
-                                                            
-            
-    
+
+
+
         else:
             raise NotImplementedError("wavelength.InfoIndex: formula {0:d}. Material {1:s}".\
-                                      format(self.formula,str(self)))        
-    
+                                      format(self.formula,str(self)))
+
 class MaterialIndex(InfoIndex):
     """
     General class for Material Index with indices looked up in ethe internal package dattbase (is normal user interface)
 
-    :param key: the index key, eg "BK7" 
+    :param key: the index key, eg "BK7"
     :type key: str
     :param database: the index database, (Default = None which use package standard)
     :type database: str
 
-    
+
     """
     def __init__(self,key = None) :
         """ Created a material refratcive index by key
@@ -587,8 +587,8 @@ class MaterialIndex(InfoIndex):
         """           str to give name and range only
         """
         return " n: {0:s} r : ({1:7.5f} , {2:7.5f})".format(self.title, self.R[0], self.R[1])
-            
-        
+
+
 class FixedIndex(RefractiveIndex):
     """
     Class to implement a simple fixed index.
@@ -605,21 +605,21 @@ class FixedIndex(RefractiveIndex):
         RefractiveIndex.__init__(self)
         self.value = float(n)
         self.title = "Fixed Index"
-        
+
     def __str__(self):
         """
         Implment str()
         """
         return " n: ({0:7.5f})".format(self.value)
-    
+
     def __getNewValue__(self,w):
         """
         Get the NewValue, does not depend of wavelength.
         param w the wavelngth, which is ignored.
         """
         return self.value
-    
-        
+
+
 class AirIndex(InfoIndex):
     """
     Class for AirIndex, this is either fixed or a special cals of InfoIndex with fixed paramers. Controlled by Global variiable
@@ -629,14 +629,14 @@ class AirIndex(InfoIndex):
 
 
     """
-   
+
     def __init__(self):
         """
         No parameter conctructor.
         """
         InfoIndex.__init__(self,6,[0.23,1.69],[0, 0.05792105, 238.0185, 0.00167917, 57.362],"air")
 
-    #     Set __str__ 
+    #     Set __str__
     def __str__(self):
         if FixedAirIndex:
             return " fixed: {0:7.5f}".format(FixedAirIndexValue)
@@ -648,7 +648,7 @@ class AirIndex(InfoIndex):
         Make a copy
         """
         return AirIndex()
-    
+
     def __getNewValue__(self,wave):
         """
         Get a new value as specified wavelenght taking into accouth the Fixed index flag
@@ -674,7 +674,7 @@ class CauchyIndex(InfoIndex):
     def __init__(self, a_or_nd, b_or_vd = None, c = None):
         """
               Implement a simple Cauchy index with variable parameter types
-             
+
         """
         if c != None:                      # all three parameters given
             a = float(a_or_nd)
@@ -706,12 +706,12 @@ class CauchyIndex(InfoIndex):
         Implements str to give nd and Vd values.
         """
         return " nd: {0:7.5f} Vd: {1:7.4f}".format(self.getNd(),self.getVd())
-            
+
 class Sellmeier(InfoIndex):
     """
     Class to implemnts a simple two parameter Sellmier index for experimental physics.
     Use InfoIndex class with formula 1 with parmeters C[0] = 0.0, C[1] = alpha, C[2] = lambda_0.
-    
+
     The Default parameters give a glass close to BK7
 
     :param alpha: the alpha parameter (Default = 1.25)
@@ -724,11 +724,11 @@ class Sellmeier(InfoIndex):
         Constructor
         """
         InfoIndex.__init__(self,1,[0.35,0.7],[0.0,float(alpha),float(lambda_0)],"Sellmeier")
-        
+
 
     def __str__(self):
         return "alpha : {0:7.5f} lambda_0 : {1:7.5f}".format(self.getAlpha(),self.getLambdaZero())
-        
+
     def getAlpha(self):
         """
         Get the alpha coef
@@ -743,7 +743,7 @@ class Sellmeier(InfoIndex):
 
     def fitIndex(self,wave,ref):
         """
-        Fit a Sellmier Index with numpy arrays of wavelength and refratice index. It will take the 
+        Fit a Sellmier Index with numpy arrays of wavelength and refratice index. It will take the
         current values of alpha and lambda_0 as the starting values.
 
         The fit paramters will also be held as intrenal variables popt and pcov
@@ -756,16 +756,16 @@ class Sellmeier(InfoIndex):
         # Return the new fitted index
         return Sellmeier(*self.popt)
 
-    
+
 class GradedIndex(RefractiveIndex):
     """
     Class to implement a graded index with a underlying base index and a radially symmeetric variation
     that depend on radial distance from an origin.
     """
-    
+
     def __init__(self,pt,index,coef):
         """
-        param pt, two dimensional point giving the location of the origin, 
+        param pt, two dimensional point giving the location of the origin,
         param index, the base refrative index
         param coef the for radial polynomial if form 1,r^2,r^4 .... as a list of floats.
         """
@@ -801,12 +801,12 @@ class GradedIndex(RefractiveIndex):
             weight = self.coef[0]
             for c in self.coef[1:]:
                 r *= rsqr
-                weight += c*r  
+                weight += c*r
                 return base*weight
         else:
             return base                       # its a scalar
 
-        
+
 
 
 
@@ -815,9 +815,9 @@ class GradedIndex(RefractiveIndex):
         Method to calcualte the Gradient as specifed ray position
         """
         p = ray.position
-            
+
         n = self.index.getValue(ray)
-        
+
         x = p.x - self.point.x
         y = p.y - self.point.y
         rsqr = x*x + y*y
@@ -842,7 +842,7 @@ class Spectrum(WaveLength):
     :type bright: float
 
     """
-    #  
+    #
     #
     def __init__(self,bright = 1.0):
         """
@@ -862,7 +862,7 @@ class Spectrum(WaveLength):
         """
         return self.brightness
 
-        
+
 
 class GaussianSpectrum(Spectrum):
     """
@@ -875,10 +875,10 @@ class GaussianSpectrum(Spectrum):
     :param bright: the peak brightness, (Defaults to 1.0)
     :type bright: float
 
-    """ 
+    """
     def __init__(self,peak,width,bright = 1.0):
         """
-       
+
         """
         Spectrum.__init__(self,bright)
         self.peak = float(peak)
@@ -891,9 +891,9 @@ class GaussianSpectrum(Spectrum):
         """
         return "p: {0:7.5f} w: {1:7.5f} b: {2:7.5f}".format(self.peak,self.width,self.brightness)
 
-    
+
     def __getNewValue__(self,wave):
-        """ 
+        """
         Get the new value at specified wavelength
         param wave the wavelength in microns
         """
@@ -909,11 +909,11 @@ class PlanckSpectrum(Spectrum):
     :type t: float
     :param emissitivity: the emmisttivity factor (defaults to 1.0)
     :type emissitivity: float
-    
+
     """
     def __init__(self, t = 5000.0, emissitivity = 1.0):
         """
-       
+
         """
         Spectrum.__init__(self)
         self.t = float(t)
@@ -929,7 +929,7 @@ class PlanckSpectrum(Spectrum):
 
 
     def setTemperature(self,t):
-        """  
+        """
         Set the tempertaure
 
         :param t: the tenperture in degrees Kelvin
@@ -940,7 +940,7 @@ class PlanckSpectrum(Spectrum):
 
     def __getNewValue__(self,wave):
         """
-        Get the new value 
+        Get the new value
         param wave the wavelength
         """
         val = self.c1*math.pow(1.0/wave,5)*(1.0/(math.exp(self.c2/(wave*self.t)) - 1.0))
@@ -948,7 +948,7 @@ class PlanckSpectrum(Spectrum):
 
 
 
-#            PhotopicSpectrum 
+#            PhotopicSpectrum
 #
 class PhotopicSpectrum(GaussianSpectrum):
     """
@@ -959,7 +959,7 @@ class PhotopicSpectrum(GaussianSpectrum):
 
 
     """
-    
+
     def __init__(self,bright = 1.0):
         """
 
@@ -967,12 +967,12 @@ class PhotopicSpectrum(GaussianSpectrum):
         GaussianSpectrum.__init__(self,PhotopicPeak,PhotopicWidth,bright)
         self.title = "Photopic Spectrum"
 
-    
+
     def __str__(self):
         """
         The str() function
         """
-        return "b: {0:7.4f}".format(self.brightness) 
+        return "b: {0:7.4f}".format(self.brightness)
 
 #
 class ScotopicSpectrum(GaussianSpectrum):
@@ -997,12 +997,12 @@ class ScotopicSpectrum(GaussianSpectrum):
         """
         The str() function
         """
-        return "b: {0:7.4f}".format(self.brightness) 
+        return "b: {0:7.4f}".format(self.brightness)
 
-#             Tricolour spectrum 
+#             Tricolour spectrum
 #
 class TriColourSpectrum(Spectrum):
-    """ 
+    """
     Implement a three coloured spectrum (RGB), all with same width
 
     :param red: the red peak, (default 1.0)
@@ -1019,7 +1019,7 @@ class TriColourSpectrum(Spectrum):
     """
     def __init__(self, red=1.0, green=1.0, blue=1.0, bright=1.0, width = 0.025):
         """ The tricoloured spectrum
-        
+
         """
         Spectrum.__init__(self,bright)
         self.red = float(red)
@@ -1034,7 +1034,7 @@ class TriColourSpectrum(Spectrum):
         """
         return "b : {0:6.3f} [{1:6.3f}, {2:6.3f}, {3:6.3f}] w: {4:6.3f}".\
             format(self.brightness,self.red,self.green,self.blue,self.width)
-        
+
 
     def __getNewValue__(self,wave):
         """ Get the new value at specified wavelength
@@ -1051,21 +1051,21 @@ class TriColourSpectrum(Spectrum):
 def WavelengthColour(wave):
     """
     Class to form as RGB list of floats to represent a wavelength colour.
-    Based on 
-    <a href="http://www.cox-internet.com/ast305/color.html">fortran code</a> 
+    Based on
+    <a href="http://www.cox-internet.com/ast305/color.html">fortran code</a>
     by Dan Bruton, Stephen F Austin State University.
 
     :param wave: wavelnegth in microns
     :type wave: float
     :return: hexstring of the colour
- 
+
     """
-    
-    
+
+
     rgb = [0.0,0.0,0.0]      # Default to black
 
-    if wave > 0.37 and wave < 0.75:     # there is colour 
-            
+    if wave > 0.37 and wave < 0.75:     # there is colour
+
         #         Take linear multi-point dog-leg
         if wave < 0.44:
             rgb[0] = (0.44 - wave)/(0.44 - 0.37)
@@ -1084,7 +1084,7 @@ def WavelengthColour(wave):
             rgb[1] = (0.645 - wave)/(0.645 - 0.58)
         else:
             rgb[0] = 1.0
-            
+
             #     Now correct for eye
 
         gamma = 0.7                    # gamma of eye
@@ -1095,13 +1095,13 @@ def WavelengthColour(wave):
         rgb[1] = math.pow(scale*rgb[1],gamma)
         rgb[2] = math.pow(scale*rgb[2],gamma)
 
-        red = int(round(rgb[0]*255))            # Scale in int 0 -> 255
-        green = int(round(rgb[1]*255))
-        blue = int(round(rgb[2]*255))
-        
-        #       Do a format 
-        return "#{0:02X}{1:02X}{2:02X}".format(red,green,blue)
-    
+    red = int(round(rgb[0]*255))            # Scale in int 0 -> 255
+    green = int(round(rgb[1]*255))
+    blue = int(round(rgb[2]*255))
+
+        #       Do a format
+    return "#{0:02X}{1:02X}{2:02X}".format(red,green,blue)
+
 
 
 def RefractiveIndexColour(index = 1.5):
@@ -1117,7 +1117,7 @@ def RefractiveIndexColour(index = 1.5):
         n = index.getValue()
     else:
         n = float(index)
-            
+
     rgb =  [0.5,0.5,1.0]      # Default to grey/blue
 
     index_min = 1.4
@@ -1126,16 +1126,16 @@ def RefractiveIndexColour(index = 1.5):
     delta = (n - index_min)/(index_max - index_min)
     rgb[1] = 1.0 - delta*rgb[1]
     rgb[1] = min(1.0,max(0.0,rgb[1]))
-    
+
     red = int(round(rgb[0]*255))            # Scale in int 0 -> 255
     green = int(round(rgb[1]*255))
     blue = int(round(rgb[2]*255))
-        
-        #       Do a format 
+
+        #       Do a format
     return "#{0:02X}{1:02X}{2:02X}".format(red,green,blue)
 
 
 
 
-        
+
 

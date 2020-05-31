@@ -13,7 +13,7 @@ import poptics.tio as t
 
 def main():
 
-    file = t.getFilename("File","txt")  # get filename with .txt default 
+    file = t.getFilename("File","csv")  # get filename with .txt default 
     data = f.readCSV(file)              # Default csv read to array on np.array
 
     
