@@ -20,10 +20,11 @@ def main():
     wa = WaveFrontAnalysis(lens)
     wa.drawAberrationPlot(angle,wavelength=wave,legend = "lower left")
 
-    
+
     plt.show()
 
-main()
-            
-    
+if __name__ == "__main__" :
+    main()
+
+
 

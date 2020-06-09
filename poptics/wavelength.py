@@ -5,7 +5,7 @@ wavelengths including refractive index and spectra.  It aslo handles the default
 """
 import math
 from os import getenv
-from matplotlib.pyplot import plot, xlabel
+from matplotlib.pyplot import plot, xlabel,grid,xlim
 import numpy as np
 from poptics.vector import Vector2d,Vector3d
 from poptics.material import MaterialData
@@ -358,7 +358,9 @@ class WaveLength(object):
             plot(x,y,c=colour)
         else:
             plot(x,y,c=colour,label=self.title)
+        xlim([self.minWavelength,self.maxWavelength])
         xlabel("Wavelength in microns")
+        grid()
 
 
 #

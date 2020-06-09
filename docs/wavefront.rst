@@ -3,25 +3,7 @@ Wavefront analysis
 ==================
 
 The module contains a set of classes to calculate, analyes and display
-wavefronts. 
 
-WavePoint class
-===============
-
-Class to implenet a WavePoint. Mainly used intrnally 
-
-.. autoclass:: poptics.wavefront.WavePoint
-   :members:
-
-
-WavePointSet class
-==================
-
-Class to implement a set (list) of Wavepoints in a plane with additional methods
-to analyse them. Mainly used internally.
-
-.. autoclass:: poptics.wavefront.WavePointSet
-   :members:
 
 WaveFront class
 ===============
@@ -63,6 +45,16 @@ terms.
 .. autoclass:: poptics.wavefront.SeidelWaveFront
    :members:
 
+PolynomialWaveFront Class
+=========================
+
+Class to specify a wafefron with x/y polynomials. This is an extension of the KingslakeWaveFront and is
+added for completeness. It is not really used since cartestian polynomials are are not orthogonal so are not
+really possible to fit to reliably. 
+
+.. autoclass:: poptics.wavefront.PolynomialWaveFront
+   :members:
+
 
 WaveFront Mask Classes
 ======================
@@ -82,6 +74,29 @@ wavefronts automatically. Ths second is
    :members:
 
 Which has central stop as found on many mirror telescope system.
+
+
+
+
+WavePoint class
+===============
+
+Class to implenet a WavePoint. Mainly used intrnally 
+
+.. autoclass:: poptics.wavefront.WavePoint
+   :members:
+
+
+WavePointSet class
+==================
+
+Class to implement a set (list) of Wavepoints in a plane with additional methods
+to analyse them. Mainly used internally.
+
+.. autoclass:: poptics.wavefront.WavePointSet
+   :members:
+
+
 
  
 WaveFrontAnalysis Class

@@ -9,9 +9,10 @@ def main():
         #       Get a material index, the defaut is to prompt for key
         index = MaterialIndex()
         index.draw()
+        plt.title("Material : " + str(index))
         plt.show()
-        
-        
 
 
-main()
+
+if __name__ == "__main__" :
+    main()
