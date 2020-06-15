@@ -10,6 +10,7 @@ from poptics.zernike import opticalZernike, opticalZernikeName
 from poptics.ray import SourcePoint, RayPencil, IntensityRay
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle # Add circle from the patches module
 from scipy.optimize import curve_fit
 import poptics.tio as tio
 
@@ -902,8 +903,8 @@ class WavePointSet(list):
         if isinstance(plane,float):      # If plane as float, make a plane
             plane = OpticalPlane(plane)
         self.plane = plane               # Record plane
-        if hasattr(plane, "maxRadius"):
-            self.maxRadius = plane.maxRadius # Set to plane maxradius if defined
+        #if hasattr(plane, "maxRadius"):
+        #    self.maxRadius = plane.maxRadius # Set to plane maxradius if defined
         for r in pencil:
             if r:                        # Only take valid rays.
                 self.add(WavePoint().setWithRay(r,plane,refpt))
@@ -1040,7 +1041,7 @@ class WavePointSet(list):
         self.zerr = np.sqrt(np.diag(pcov))
 
         #      Return the result as a Zernike Wavefront with unit radius.
-        ze = ZernikeWaveFront(1.0,None,*popt)
+        ze = ZernikeWaveFront(self.maxRadius,*popt)
         return ze
 
 
@@ -1101,8 +1102,12 @@ class WavePointSet(list):
         for p in self:
             xData.append(p.x)
             yData.append(p.y)
-        plt.scatter(xData,yData)
-        plt.axis("equal")
+
+        fig,ax = plt.subplots()
+        ax.scatter(xData,yData)
+        ax.add_artist(Circle((0,0),self.maxRadius,color = "r",fill = False))
+        plt.xlim([-self.maxRadius,self.maxRadius])
+        #ax.axis("equal")
 
 
 
@@ -1171,7 +1176,7 @@ class WaveFrontAnalysis(object):
         ep = self.lens.exitPupil(self.design)         # Exit pupil of lens
 
         #     Form the wavefront
-        wf = WavePointSet().setWithRays(pencil,ep,self.refpt)
+        wf = WavePointSet(ep.getRadius()).setWithRays(pencil,ep,self.refpt)
         return wf
 
 

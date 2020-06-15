@@ -6,10 +6,10 @@ from poptics.lens import OpticalGroup
 from poptics.wavelength import MaterialIndex,AirIndex,getDefaultWavelength
 from poptics.ray import IntensityRay,RayPencil
 from poptics.surface import FlatSurface
-from poptics.vector import Unit3d,Angle
+from poptics.vector import Unit3d,Angle,Vector2d,Vector3d
 import math
 import numpy as np
-import poptics.tio as tio
+from poptics.tio import openFile,getExpandedFilename
 from matplotlib.pyplot import plot,xlabel,ylabel,title,grid
 from scipy.special import j1
 
@@ -43,13 +43,14 @@ class Prism(OpticalGroup):
         #       Variable needed below
         self.height = float(height)
         self.angle = math.radians(angle)    # Hold angle in radians
+        self.tilt = 0.0
 
         #        Make surface normals to front and back faces
         fn = Unit3d(Angle(2*math.pi - self.angle/2))
         bn = Unit3d(Angle(self.angle/2))
 
         #         Poistion of front and back surfaces
-        p = height*math.tan(self.angle/2)/2
+        p = Vector3d(0.0,0.0,height*math.tan(self.angle/2)/2)
 
         #         Make the two surfaces and add then to the self (an OpticalGroup)
         #         Not need to specify type are refracting.
@@ -75,20 +76,48 @@ class Prism(OpticalGroup):
             index = MaterialIndex(index)
         self[0].refractiveindex = index
 
+    def setTilt(self,tilt = None):
+        """
+        Set the tilt angle of the prism.
 
-    def minDeviation(self,wave = None):
+        If called with None will use the current value of tilt and angle and reset
+        the surface to be consistent.
+
+        :param tilt: the tilt angle of the prsim in radians (Default = None) reset
+        :type: float
+        """
+        if tilt != None:
+            self.tilt = tilt             # Update tilt if given
+        #        Make surface normals to front and back faces allowing for the tilt
+        fn = Unit3d(Angle(2*math.pi - self.angle/2 - self.tilt))
+        bn = Unit3d(Angle(self.angle/2 - self.tilt))
+
+        #         Poistion of front and back surfaces allowing for the tilt
+        p = Vector3d(0.0,0.0,self.height*math.tan(self.angle/2)/2)
+        p.rotateAboutX(-self.tilt)
+
+        #      Update the locations and surface normals of the two faces.
+        self[0].point = -p
+        self[1].point = p
+        self[0].normal = fn
+        self[1].normal = bn
+        return self
+
+
+
+    def minDeviation(self,wavelength):
         """
         Get the angle of minium deviation at specified wavelength.
 
         Note this needs to take into account the AirIndex used in the package.
 
-        :param wave: the wavelength (Default = wl.Default)
+        :param wave: the wavelength
         :type wave: float
         :return: the minimum deviatation as a float in radians.
 
         """
-        a = AirIndex().getValue(wave)
-        nval = self.n.getValue(wave)/a    # Correct for air index
+        a = AirIndex().getValue(wavelength)
+        nval = self.n.getValue(wavelength)/a    # Correct for air index
         sa = nval*math.sin(self.angle/2)
         s = math.asin(sa)
         return 2*s - self.angle           # Return radians.
@@ -241,10 +270,15 @@ class Prism(OpticalGroup):
         pt = self.getPoint()     # Centre of prism
 
         #         Form top,left,right corners
-        top = [pt.z, pt.y + self.height/2]
+        top = Vector2d(pt.z, pt.y + self.height/2)
         d = self.height*math.tan(self.angle/2)
-        left = [pt.z - d , pt.y - self.height/2]
-        right = [pt.z + d, pt.y - self.height/2]
+        left = Vector2d(pt.z - d , pt.y - self.height/2)
+        right = Vector2d(pt.z + d, pt.y - self.height/2)
+
+
+        top.rotate(self.tilt)
+        left.rotate(self.tilt)
+        right.rotate(self.tilt)
 
         #      Plot them out with plt.plot
         plot([top[0],left[0],right[0],top[0]],[top[1],left[1],right[1],top[1]],"k",lw=2.0)
@@ -295,13 +329,17 @@ class PrismSpectrometer(Prism):
         return self
 
 
-    def minDeviation(self):
+    def minDeviation(self,wavelength = None):
         """
-        Method to get the minimum deviation at the current setup wavelength
+        Method to get the minimum deviation, the default is the current setup
+        wavelength, but this can be overridden by a supplied wavelength
 
         :return: float the minimum deviation in radians
         """
-        return Prism.minDeviation(self,self.wavelength)
+        if wavelength == None:
+            wavelength = self.wavelength
+
+        return Prism.minDeviation(self,wavelength)
 
 
     def resolution(self):
@@ -420,12 +458,30 @@ class PrismSpectrometer(Prism):
 
     def fromFile(self,fn = None):
         """
-        Read a spectrometer set up from a file
+        Read a spectrometer set up from a file. The filename will be appeneded with
+        appended with a default extension of ".spec"
+
+        :param fn: file name, (Default = None)
+        :type fn: str
+
+        File syntax is serise of commands (one per line) being
+
+        ::
+
+            point: x,y,z
+            index: index_name
+            angle: prism_angle (in degrees)
+            height: prism_height (in mm)
+            tilt: prism_tilt (in degrees)
+            beam: beam_radius (in mm)
+            setup: setup_wavelength (in um)
+
+        Liner starting with # are ignored as comments
         """
         if fn == None:
-            sfile = tio.openFile("Spectrometer file","r","spec")
+            sfile = openFile("Spectrometer file","r","spec")
         else:
-            fn = tio.getExpandedFilename(fn)   # Sort out logicals
+            fn = getExpandedFilename(fn)   # Sort out logicals
             if not fn.endswith("spec"):        # Append ".spec" if not given
                 fn += ".spec"
             sfile= open(fn,"r")             # open file
@@ -451,12 +507,16 @@ class PrismSpectrometer(Prism):
 
                 elif token[0].startswith("angle"):
                     self.angle = math.radians(float(token[1]))
+                    self.setTilt(self.tilt)          # Reset surfaces
 
                 elif token[0].startswith("height"):
                     self.height = float(token[1])
 
                 elif token[0].startswith("beam"):
                     self.beam = float(token[1])
+
+                elif token[0].startswith("tilt"):
+                    self.setTilt(math.radians(token[1]))
 
                 elif token[0].startswith("setup"):
                     self.setUpWavelength(float(token[1]))

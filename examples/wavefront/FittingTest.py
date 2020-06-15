@@ -1,5 +1,6 @@
 """
-        Test wavefron fitting
+        Test wavefron fitting, read in a wavefront from a file, form a
+        WavePointSet and then fits Zernike Optrical Coefficients.
 
 """
 
@@ -15,27 +16,30 @@ def main():
     #     Read in a wavefront
     wf = WaveFront().fromFile()
     tprint(repr(wf))
-    wf.plot()
+    wf.plot()                  # Make vertical + horizontal plot
 
-    ws = WavePointSet()
 
     radius = wf.getRadius()
-    yscan = np.linspace(-radius,radius,11)
+    yscan = np.linspace(-radius,radius,11)     # x/y positions of points
     xscan = np.linspace(-radius,radius,11)
 
+    ws = WavePointSet(radius)        # Start with blanks set of points
+                               # Make grid of points
     for y in yscan:
         for x in xscan:
-            if x*x + y*y <= radius*radius:
+            if x*x + y*y <= radius*radius:   # Inside circle
                 pt = Vector2d(x,y)
                 wp = WavePoint(wavelength = 0.65).setWithWaveFront(wf,pt)
-                ws.add(wp)
+                ws.add(wp)                   # Add to wavepoint set
 
 
+    #       Fit zernike to 4th orders
     zw = ws.fitZernike(4)
     tprint(repr(zw))
-    zw.plot()
+    tprint("Error is : ",str(ws.zerr))      # Show the fitting error for each component
+    zw.plot()     # Plot to same graph
     #ws.plot()
-    plt.show()
+    plt.show()    # Show the final plot
 
 
 if __name__ == "__main__":

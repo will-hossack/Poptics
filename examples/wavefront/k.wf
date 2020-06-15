@@ -1,6 +1,6 @@
 #       Kingslake wf
 type: kingslake
-radius: 1.0
+radius: 4.0
 -2.0
 1.0
 -1.0

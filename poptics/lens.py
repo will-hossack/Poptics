@@ -1198,6 +1198,60 @@ class Doublet(Lens):
             self.paraxial.draw(legend)
 
 
+
+class AchromaticDoublet(Doublet):
+    """
+    Simplified achmormatic doublet with symmetyric crown elementt corercted for chromatic
+    aberretaion isng Nd/Vd of the galsses.
+
+    :param pos: position of the lens (Default = 0.0)
+    :type pos: Vector3d or float
+    :param focal: flocal length (Default = 100 mm)
+    :type focal: float
+    :param radius: radius of lens, (Default = 10mm)
+    :type radius: float
+    :param ct: centre thickess of crown element (Default = 5.0 mm)
+    :type ct: float
+    :param ft: centre thickness of flint elemment (Default = 2.0mm)
+    :type ft: float
+    :param crownindex: refractive index of crown elemnt (Default = "BK7")
+    :type crownindex: RefractiveIndex or str
+    :param flintindex: refractive index of flint element (Default = "F4")
+    :type flintindex: RefractiveIndex or str
+
+    Note elemnt is scaled to set focal length so thickness will vary slightly.
+    """
+
+    def __init__(self,pos = 0.0,focal = 100.0,radius = 10.0, ct = 5.0, ft = 2.0, crownindex = "BK7", flintindex = "F4"):
+
+        if isinstance(crownindex,str):                        # Lookup  crownindex if given string key
+            crownindex = MaterialIndex(crownindex)
+        if isinstance(flintindex,str):                        # Lookup flintindex if given string key
+            flintindex = MaterialIndex(flintindex)
+
+        nf = crownindex.getNd()         # Get Nd and Vd for the two glasses
+        nb = flintindex.getNd()
+        vf = crownindex.getVd()
+        vb = flintindex.getVd()
+
+        power = 1.0/focal
+        frontPower = vf/(vf - vb)*power        # power of crown lens
+        backPower = vb/(vb - vf)*power         # power of flint lens
+
+        fc = frontPower/(2.0*(nf - 1.0))       # Curvature of crown (symmetric)
+        mc = -fc
+        bc = mc - backPower/((nb - 1.0))       # Back curvature of flint
+        Doublet.__init__(self,pos,fc,ct,mc,ft,bc,radius,crownindex,flintindex)
+        self.setFocalLength(focal,True)        # Set the exacct flocal length
+        self.focal = focal
+
+    def __str__(self):
+        """
+        Str
+        """
+        return "p: {0:s} f: {1:6.4f} r: {2:6.4f}".format(str(self.getPoint()),self.focal,self.getRadius())
+
+
 #
 class Eye(Lens):
     """
@@ -1351,16 +1405,30 @@ class Eye(Lens):
 
 class DataBaseLens(Lens):
     """
-    Class to read lens from input file
+    Class to read in the lens from file.
+
+    :param fn: the name of the lens file (Default = None) None will prompt
+    :type fn: str
+
+    If the filename does not end in lens then ".lens" is appended.
+
+    the file format is a setuies of key words followed bt parameters, one per line
+    with the surfaces in order.
+
+    ::
+        title: name_of_lets (str)
+        point: x,y,z     (reference point)
+        spherical:
+        quadratic
+        iris:
+        aperture:
+
+    End
     """
 
     def __init__(self,fn = None):
         """
-        Read in the lens from specified file.
-        param fn the name of the lens file
-        If the filename does not end in lens then ".lens" is appended
-
-        If this is no filename given then the user will me prompted via tio openFile.
+        Constructor
         """
 
         Lens.__init__(self,0.0)         # Create a blank lens
