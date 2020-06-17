@@ -18,7 +18,7 @@ def main():
     angle = Unit3d().parseAngle("10")
     #        Form a pencil is the circular aperture as specified angle of 0.45 microns
     #        and add a RayPath to ech ray
-    pencil = RayPencil().addBeam(disc,angle,wavelength = 0.45).addMonitor(RayPath())
+    pencil = RayPencil().addBeam(disc,angle,wavelength = 0.59).addMonitor(RayPath())
 
     #        Propgate throgh the iris aperture and another 30 mm to make it visible
     pencil *= ca

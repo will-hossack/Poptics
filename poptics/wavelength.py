@@ -1059,33 +1059,33 @@ def WavelengthColour(wave):
 
     :param wave: wavelnegth in microns
     :type wave: float
-    :return: hexstring of the colour
+    :return: truple of (r,g,b)
 
     """
 
 
-    rgb = [0.0,0.0,0.0]      # Default to black
+    r,g,b = 0.0, 0.0, 0.0
 
     if wave > 0.37 and wave < 0.75:     # there is colour
 
         #         Take linear multi-point dog-leg
         if wave < 0.44:
-            rgb[0] = (0.44 - wave)/(0.44 - 0.37)
-            rgb[2] = 1.0
+            r = (0.44 - wave)/(0.44 - 0.37)
+            b = 1.0
         elif wave < 0.49 :
-            rgb[1] = (wave - 0.44)/(0.49 - 0.44)
-            rgb[2] = 1.0
+            g = (wave - 0.44)/(0.49 - 0.44)
+            b = 1.0
         elif wave < 0.51:
-            rgb[1] = 1.0
-            rgb[2] = (0.51 - wave)/(0.51 - 0.49)
+            g = 1.0
+            b = (0.51 - wave)/(0.51 - 0.49)
         elif wave < 0.58:
-            rgb[0] = (wave - 0.51)/(0.58 - 0.51)
-            rgb[1] = 1.0
+            r = (wave - 0.51)/(0.58 - 0.51)
+            g = 1.0
         elif wave < 0.645 :
-            rgb[0] = 1.0
-            rgb[1] = (0.645 - wave)/(0.645 - 0.58)
+            r = 1.0
+            g = (0.645 - wave)/(0.645 - 0.58)
         else:
-            rgb[0] = 1.0
+            r = 1.0
 
             #     Now correct for eye
 
@@ -1093,16 +1093,11 @@ def WavelengthColour(wave):
         d = wave - 0.56;               # Distance from peak of vision
         scale = 1.0 - d*d/0.03610944;  # Parabola with zeros 0.37 & 0.75
 
-        rgb[0] = math.pow(scale*rgb[0],gamma)     #Scale by gamma (fit to monitor)
-        rgb[1] = math.pow(scale*rgb[1],gamma)
-        rgb[2] = math.pow(scale*rgb[2],gamma)
+        r = math.pow(scale*r,gamma)     #Scale by gamma (fit to monitor)
+        g = math.pow(scale*g,gamma)
+        b = math.pow(scale*b,gamma)
 
-    red = int(round(rgb[0]*255))            # Scale in int 0 -> 255
-    green = int(round(rgb[1]*255))
-    blue = int(round(rgb[2]*255))
-
-        #       Do a format
-    return "#{0:02X}{1:02X}{2:02X}".format(red,green,blue)
+    return (r,g,b)      # Return as tuple
 
 
 
@@ -1112,7 +1107,7 @@ def RefractiveIndexColour(index = 1.5):
 
     :param index: value of refrative index (Default = 1.5)
     :type index: float
-    :return: hexstring with colour
+    :return: truple with colour
 
     """
     if isinstance(index,RefractiveIndex):     # Allow for different parameters
@@ -1120,21 +1115,16 @@ def RefractiveIndexColour(index = 1.5):
     else:
         n = float(index)
 
-    rgb =  [0.5,0.5,1.0]      # Default to grey/blue
+    r,g,b =  0.5,0.5,1.0      # Default to grey/blue
 
     index_min = 1.4
     index_max = 2.3
 
     delta = (n - index_min)/(index_max - index_min)
-    rgb[1] = 1.0 - delta*rgb[1]
-    rgb[1] = min(1.0,max(0.0,rgb[1]))
+    g = 1.0 - delta*g
+    g = min(1.0,max(0.0,g))
 
-    red = int(round(rgb[0]*255))            # Scale in int 0 -> 255
-    green = int(round(rgb[1]*255))
-    blue = int(round(rgb[2]*255))
-
-        #       Do a format
-    return "#{0:02X}{1:02X}{2:02X}".format(red,green,blue)
+    return (r,g,b)
 
 
 

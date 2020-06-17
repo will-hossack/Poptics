@@ -957,7 +957,7 @@ class RayPath(RayMonitor):
 
         """
         col = WavelengthColour(self.wavelength)
-        plot(self.z,self.y,col)
+        plot(self.z,self.y,color = col)
 
 
 #
