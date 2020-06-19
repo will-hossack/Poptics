@@ -23,6 +23,7 @@ Welcome to Poptics's documentation!
    wavefront
    analysis
    zernike
+   jones
    gui
    spectrometer
 

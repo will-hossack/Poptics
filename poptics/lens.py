@@ -7,7 +7,7 @@ from poptics.surface import OpticalPlane,ImagePlane,CircularAperture,IrisApertur
 from poptics.matrix import ParaxialPlane,ParaxialMatrix,DielectricMatrix,ParaxialGroup
 from poptics.vector import Vector3d
 from poptics.wavelength import getDesignWavelength,AirIndex,MaterialIndex,CauchyIndex,PhotopicPeak
-import optics.analysis as ana     # This needs fixed
+import poptics.analysis as ana     # This needs fixed
 import poptics.tio as tio
 from matplotlib.pyplot import plot
 from os.path import join

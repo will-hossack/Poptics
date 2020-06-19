@@ -1,7 +1,7 @@
 """
 Classes to handle of materail database, mainly glasses
 """
-from tio import getExpandedFilename,getOption
+from poptics.tio import getExpandedFilename,getOption
 from importlib.resources import open_text
 
 DataFile = "materials.data"
@@ -23,7 +23,7 @@ class MaterialData(object):
         If the database is missing an OSError is raised
         """
         global DataBase
-        
+
         if filename == None:            # Default database
             if DataBase == None:        # first call, so load database
                 try:
@@ -32,7 +32,7 @@ class MaterialData(object):
                     file.close()
                 except:
                     raise OSError("MaterialData() unable to open Material file -- PANIC STOP")
-         
+
         else:                         # Replacement Database
 
             try :
@@ -42,8 +42,8 @@ class MaterialData(object):
                 filestream.close()
             except :
                 raise OSError("MaterialData() unable to open data file --{0:s}-- PANIC STOP".format(filename))
-    
-          
+
+
     def getList(self):
         """
         Method to get a list of the materials keys in the database as a list of strings.
@@ -57,9 +57,9 @@ class MaterialData(object):
                 if len(token) != 0:
                     key.append(token[0].strip())     # Key is first token
         return key
-        
-    
-    
+
+
+
     def getMaterial(self,key = None):
         """
         Method to get a material from the loaded database by key.
@@ -85,7 +85,7 @@ class MaterialData(object):
                         else:
                             raise OSError("MaterialData.getMaterial: failed to find formula in {0:s}".format(line))
 
-                        if token[3].strip().lower() == "range": 
+                        if token[3].strip().lower() == "range":
                             ragn = []
                             rl = float(token[4].strip())       # Lower range
                             ragn.append(rl)
@@ -99,24 +99,24 @@ class MaterialData(object):
                             for c in token[7:]:                # May be any number of coefficeints.
                                 cf = float(c.strip())
                                 coef.append(cf)
-                                                               
+
                         else:
                             raise OSError("MaterialData.getMaterial: failed to find coef in {0:s}".format(line))
 
                         return Material(key,formula,ragn,coef)  #   Success found material
-                    
-            return Material("NotValid",0,[0,0],[0])                                         
-                        
+
+            return Material("NotValid",0,[0,0],[0])
+
         except (OSError):
             raise SyntaxError("MaterialData.getMaterial: syntax error on line [{0:s}]".format(line))
-            
-    
-                  
 
-#           
+
+
+
+#
 class Material(object):
     """
-    Class to hold a material type being name, formula and coefficents in the form 
+    Class to hold a material type being name, formula and coefficents in the form
     as https://refractiveindex.info/
 
     :param name: name of material typically the key
@@ -132,25 +132,25 @@ class Material(object):
     noramlly used to pass information to poptics.wavelength.InfoIndex.
 
     """
-    
+
     def __init__(self, name, formula,wrange, coef):
         """
         Constructor to for a material
-       
+
         """
         self.name = name
         self.formula = int(formula)
         self.wrange = list(wrange)
         self.coef = list(coef)
-    
-    
+
+
     def __repr__(self):
         """
         The repr method.
         """
         return "{}: ".format(self.__class__.__name__) + str(self)
-    
-    
+
+
     def __str__(self):
         """
         Implement str() to return string of informatiom

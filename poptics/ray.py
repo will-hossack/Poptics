@@ -804,6 +804,7 @@ class IntensityRay(Ray):
                 self.refractiveindex = info.refractiveindex       #  Update ray refrective index
                 return True
             else:
+                self.setInvalid()                                 # Above critical, set invalid
                 return False
 
         elif info.type == 2:                                      # Reflection
@@ -867,7 +868,7 @@ class RayMonitor(object):
         """
         print("Ray Monitor update method not defined")
 
-    def draw(self):
+    def draw(self,ax = None):
         """
         Blank method, overloaded in extending classes if used\
         """
@@ -957,7 +958,9 @@ class RayPath(RayMonitor):
 
         """
         col = WavelengthColour(self.wavelength)
+
         plot(self.z,self.y,color = col)
+
 
 
 #

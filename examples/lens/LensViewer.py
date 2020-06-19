@@ -5,13 +5,13 @@ Author: Will Hossack, The University of Edinburgh
 """
 from poptics.lens import DataBaseLens
 from poptics.ray import RayPencil,RayPath
-from poptics.tio import tprint
+from poptics.tio import tprint,getFloat
 import matplotlib.pyplot as plt
 import math
-    
+
 
 def main():
-    
+
     #
     #      Read lens in from database
     #
@@ -19,7 +19,7 @@ def main():
     lens.setIris(0.7)           # Set iris to 0.7 of max
     #
     #       Make collimated pencil and add ray monitor to each ray
-    angle = 2.0
+    angle = getFloat("Angle",2.0)
     pencil = RayPencil().addBeam(lens,math.radians(angle),"vl").addMonitor(RayPath())
     #
     tprint("Focal length is : ",lens.backFocalLength())
@@ -33,7 +33,7 @@ def main():
     pencil *= op         # To plane
     #
     #                    Draw the diagram
-    
+
     plt.axis('equal')
     lens.draw(planes = True, legend = True)
     op.draw()
@@ -50,7 +50,7 @@ main()
 
 
 
-    
+
 
 
 
