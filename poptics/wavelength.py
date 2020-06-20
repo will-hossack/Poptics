@@ -208,8 +208,6 @@ class WaveLength(object):
     - self.maxWavelenth = Redlimit
     - self.plotPoints = 100
     - self.title = None
-
-
     """
     def __init__(self):
 

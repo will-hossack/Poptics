@@ -1,4 +1,4 @@
-""" 
+"""
 Simple Python programme to read in a multi collumn CSV fine and plot
 the first two colums as a x/y graph. If there is a third colulm it
 will be used for the y error bars.
@@ -13,12 +13,12 @@ import poptics.tio as t
 
 def main():
 
-    file = t.getFilename("File","csv")  # get filename with .txt default 
+    file = t.getFilename("File","csv")  # get filename with .csv default
     data = f.readCSV(file)              # Default csv read to array on np.array
 
-    
+
     if data.shape[0] > 2:               # If three cols use errors
-        yErr = data[2]                  # set yErr to column 2 
+        yErr = data[2]                  # set yErr to column 2
     else:
         yErr = None                     # Set to None
 

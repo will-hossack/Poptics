@@ -1,12 +1,18 @@
 """
-     Set of gui classes and methods
-"""
-from os import getenv
-import sys
-from importlib.resources import open_text,path
+     Set of gui classes and methods.
+
+     Warning: these GUI do not work very smoothly with Spyder / IPython
+     because the Spyder graphics window is a PyQT widget and there
+     is some odd interactations, in particular when you close the main
+     window it tend to hang the Sypder IPhthon console and you have to
+     retart the Kernel. This is know problem on StackOverflow but
+     there is no sensible soliution that actually works !
+     """
+from importlib.resources import path
 import math
 from poptics.wavelength import getCurrentWavelength,setCurrentWavelength,\
-    getDesignWavelength,setDesignWavelength,getDefaultWavelength,BlueLimit,RedLimit
+        getDesignWavelength,setDesignWavelength,getDefaultWavelength,\
+        BlueLimit,RedLimit
 from poptics.lens import setCurrentLens,getCurrentLens
 from poptics.wavefront import WaveFrontAnalysis,Interferometer
 from poptics.analysis import KnifeTest,SpotAnalysis
@@ -14,10 +20,13 @@ from poptics.ray import RayPencil,RayPath,getCurrentAngle,setCurrentAngle
 from poptics.psf import getReferencePointOption,setReferencePointOption,\
         getPlaneShift,setPlaneShift,incrementPlaneShift
 from poptics.vector import Unit3d
+
+#       The  PyQt5 bits
 from PyQt5.QtWidgets import QWidget,QLabel,QDoubleSpinBox,QPushButton,QGridLayout,\
     QDial,QMessageBox,QMainWindow,QAction,QVBoxLayout,QFileDialog,QRadioButton
 from PyQt5.QtCore import Qt
 
+#         The Matplot libs bit to render Matplotlib plots in a QT5 window.
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
@@ -44,7 +53,7 @@ def getGlobals():
 
 class WaveLengthSetter(QWidget):
     """
-    Class to set the Current and Design wavelengths with spinners. 
+    Class to set the Current and Design wavelengths with spinners.
 
     :param parent: the calling frame of widget
     :param closeAction: function to be executed when panel closed.
@@ -80,7 +89,7 @@ class WaveLengthSetter(QWidget):
         resetButton = QPushButton("Reset")
         resetButton.clicked.connect(self.resetButtonClicked)
 
-        #      Use Grid layout 
+        #      Use Grid layout
         layout = QGridLayout()
         layout.addWidget(currentLabel,0,0)      # Add the 6 item in Grid
         layout.addWidget(self.currentSpin,0,1)
@@ -93,7 +102,7 @@ class WaveLengthSetter(QWidget):
 
 
         # Method to update the values from the spinners, close and rest buttons
-        
+
     def currentValueChange(self):
         v = self.currentSpin.value()
         setCurrentWavelength(v)
@@ -108,12 +117,12 @@ class WaveLengthSetter(QWidget):
         self.designSpin.setValue(c)
         setCurrentWavelength(c)
         setDesignWavelength(c)
-        
+
     def closeButtonClicked(self):     # Close and execute close action if given
         self.close()
         if self.closeAction != None:
             self.closeAction()
-        
+
 
 class DirectionSetter(QWidget):
     """
@@ -126,7 +135,7 @@ class DirectionSetter(QWidget):
         super(DirectionSetter,self).__init__(parent)
 
         self.closeAction = closeAction
-        
+
         self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(self.backgroundRole(), Qt.white)
@@ -166,24 +175,24 @@ class DirectionSetter(QWidget):
         layout.addWidget(closeButton,3,1)
         self.setLayout(layout)
         self.setWindowTitle("DirectionSetter")
-        
+
 
     """
     Method to update the values from the spinners and close the widow
     """
-        
+
     def valueChange(self):           # For either spinned
         self.theta = self.thetaSpin.value()
         self.psi = self.psiSpin.value()
         u = Unit3d().setPolarDegrees(self.theta,self.psi)
         setCurrentAngle(u)
-        self.unitLabel.setText(str(getCurrentAngle()))        
+        self.unitLabel.setText(str(getCurrentAngle()))
 
     def resetButtonClicked(self):
         self.thetaSpin.setValue(0.0)
         self.psiSpin.setValue(0.0)
         self.valueChange()
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
@@ -198,14 +207,14 @@ class IrisSetter(QWidget):
         super(IrisSetter,self).__init__(parent)
 
         global IrisRatio
-        
+
         self.closeAction = closeAction
         self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(self.backgroundRole(), Qt.white)
         self.setPalette(p)
 
-        
+
         self.irisRatio = IrisRatio
         self.irisLabel = QLabel("Iris : " + str(self.irisRatio))
         self.irisDial = QDial()
@@ -216,7 +225,7 @@ class IrisSetter(QWidget):
         closeButton.clicked.connect(self.closeButtonClicked)
         resetButton = QPushButton("Reset")
         resetButton.clicked.connect(self.resetButtonClicked)
-        
+
 
         layout = QGridLayout()
         layout.addWidget(self.irisLabel,0,1)
@@ -224,7 +233,7 @@ class IrisSetter(QWidget):
         layout.addWidget(resetButton,2,0)
         layout.addWidget(closeButton,2,1)
         self.setLayout(layout)
-    
+
     def valueChange(self):
         global IrisRatio
         self.irisRatio = self.irisDial.value()/100.0
@@ -237,7 +246,7 @@ class IrisSetter(QWidget):
         self.iris = 1.0
         self.irisDial.setValue(100)
         self.valueChange()
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
@@ -249,11 +258,11 @@ class PlaneSetter(QWidget):
     """
     Class for plane setter with dial, this update using setPlaneShift and
     incrementPlaneShift
-    
+
     """
     def __init__(self, scale = 0.01 , parent = None,closeAction = None,changedAction = None):
         super(PlaneSetter,self).__init__(parent)
-        
+
         self.closeAction = closeAction
         self.changedAction = changedAction
         self.setAutoFillBackground(True)
@@ -263,7 +272,7 @@ class PlaneSetter(QWidget):
 
         self.shift = getPlaneShift()
         self.scale = scale
-        
+
         self.planeLabel = QLabel("Plane : " + "{0:5.3f}".format(self.shift))
         self.planeDial = QDial()
         self.planeDial.setRange(-100,100)
@@ -273,7 +282,7 @@ class PlaneSetter(QWidget):
         closeButton.clicked.connect(self.closeButtonClicked)
         resetButton = QPushButton("Reset")
         resetButton.clicked.connect(self.resetButtonClicked)
-        
+
 
         layout = QGridLayout()
         layout.addWidget(self.planeLabel,0,1)
@@ -281,7 +290,7 @@ class PlaneSetter(QWidget):
         layout.addWidget(resetButton,2,0)
         layout.addWidget(closeButton,2,1)
         self.setLayout(layout)
-    
+
     def valueChange(self):
         global PlaneShift
         self.shift = self.planeDial.value()*self.scale
@@ -295,7 +304,7 @@ class PlaneSetter(QWidget):
         self.shift = 0.0
         self.planeDial.setValue(0)
         self.valueChange()
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
@@ -311,21 +320,22 @@ class LensSetter(QWidget):
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        with path("optics","lenses") as p:    # New code
+
+        #    Use importlib resourses path to get path to lens directory
+        with path("poptics","lenses") as p:    # New code
             dir = p
         dir = str(dir)
-        #dir = getenv("LENS")
-        
-        fileName, _ = QFileDialog.getOpenFileName(self,"Lens Files",dir,\
-                                                  "Lens Files (*.lens)", options=options)
-        if fileName:
-            setCurrentLens(fileName)
 
-        if closeAction != None:      # Close the frame
+        fileName, _ = QFileDialog.getOpenFileName(self,"Lens Files",dir,\
+                            "Lens Files (*.lens)", options=options)
+        if fileName:
+            setCurrentLens(fileName)  # Set the current lens.
+
+        if closeAction != None:      # Do any specified action
             closeAction()
-            
-        self.close()
-        
+
+        self.close()                  # Clase the frame
+
 
 class ZernikeOrderSetter(QWidget):
     """
@@ -358,7 +368,7 @@ class ZernikeOrderSetter(QWidget):
         self.zernikeEightButton.order = 8
         self.zernikeEightButton.clicked.connect(lambda: self.buttonClicked(self.zernikeEightButton))
 
-        
+
         closeButton = QPushButton("Close")
         closeButton.clicked.connect(self.closeButtonClicked)
         resetButton = QPushButton("Reset")
@@ -382,13 +392,13 @@ class ZernikeOrderSetter(QWidget):
         global ZernikeOrder
         ZernikeOrder = button.order
         print("Order " + str(ZernikeOrder))
-        
+
     def resetButtonClicked(self):
         global ZernikeOrder
         ZernikeOrder = 4
         self.zernikeFourButton.setChecked(True)
 
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
@@ -447,13 +457,13 @@ class ReferenceOptionSetter(QWidget):
 
     def buttonClicked(self,button):
         setReferencePointOption(button.option)
-    
-        
+
+
     def resetButtonClicked(self):
         setReferencePointOption(1)
         self.inplaneButton.setChecked(True)
 
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
@@ -485,12 +495,12 @@ class TiltSetter(QWidget):
         self.ytiltSetter.setValue(Ytilt)
         self.ytiltSetter.setSingleStep(0.1)
         self.ytiltSetter.valueChanged.connect(self.ytiltSetterClicked)
-        
+
         closeButton = QPushButton("Close")
         closeButton.clicked.connect(self.closeButtonClicked)
         resetButton = QPushButton("Reset")
         resetButton.clicked.connect(self.resetButtonClicked)
-        
+
 
         layout = QGridLayout()     # Vertical box
         layout.addWidget(xtiltLabel,0,0)
@@ -512,7 +522,7 @@ class TiltSetter(QWidget):
         global Ytilt
         y = self.ytiltSetter.value()
         Ytilt  = float(y)
-        
+
 
     def resetButtonClicked(self):
         global Xtilt
@@ -521,12 +531,12 @@ class TiltSetter(QWidget):
         self.xtiltSetter.setValue(Xtilt)
         Ytilt = 0.0
         self.ytiltSetter.setValue(Ytilt)
-        
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
             self.closeAction()
-        
+
 
 
 class KnifeSetter(QWidget):
@@ -564,7 +574,7 @@ class KnifeSetter(QWidget):
         self.wireSetter = QRadioButton("Wire")
         self.wireSetter.clicked.connect(self.wireSetterClicked)
         self.wireSetter.setChecked(CurrentWire)
-                
+
         closeButton = QPushButton("Close")
         closeButton.clicked.connect(self.closeButtonClicked)
         resetButton = QPushButton("Reset")
@@ -604,8 +614,8 @@ class KnifeSetter(QWidget):
         global CurrentWire
         CurrentWire = not CurrentWire
         self.wireSetter.setChecked(CurrentWire)
-        
-        
+
+
 
     def resetButtonClicked(self):
         global CurrentKnife
@@ -617,13 +627,13 @@ class KnifeSetter(QWidget):
         self.knifeAngleSetter.setValue(CurrentKnifeAngle)
         CurrentKnifeShift = 0.0
         self.shiftSetter.setValue(CurrentKnifeShift)
-        
-        
+
+
     def closeButtonClicked(self):      # Close the frame
         self.close()
         if self.closeAction != None:
             self.closeAction()
-        
+
 
 class MessageBox(QMessageBox):
     """
@@ -641,19 +651,19 @@ class MessageBox(QMessageBox):
 
 class PltMainWindow(QMainWindow):
     """ Class to set up a main window with the central pane being a Matplotlib pane
-    
+
     :param lens: The lens to be shown or manipulated. (Default = None)
     :type lens: OpticalGroiup or extending class
     :param parent: the parent window if there is ine (Default = None)
     """
-    def __init__(self, lens = None, parent=None):
+    def __init__(self, lens = None, parent = None):
         super(PltMainWindow, self).__init__(parent)
 
         # Set size of panel
         self.resize(PanelSize[0],PanelSize[1])
         #  If lens given then set current lens, if not use default lens.
         if lens != None:
-            setCurrentLens(lens) 
+            setCurrentLens(lens)
 
         #     Setup components for plt window
         self.figure = plt.figure()
@@ -661,8 +671,8 @@ class PltMainWindow(QMainWindow):
         toolbar = NavigationToolbar(self.canvas, self)
         self.menubar = self.menuBar()
         self.menubar.setNativeMenuBar(False)
-        
-        #      Set up basic menu items 
+
+        #      Set up basic menu items
         fileMenu = self.menubar.addMenu("File")
         fileAction = QAction("New Lens",self)
         fileAction.triggered.connect(self.fileButtonClicked)
@@ -677,11 +687,11 @@ class PltMainWindow(QMainWindow):
         infoAction.triggered.connect(self.infoButtonClicked)
         fileMenu.addAction(infoAction)
         exitAction = QAction("Exit",self)
-        exitAction.triggered.connect(sys.exit)
+        exitAction.triggered.connect(self.exitButtonClicked)
         fileMenu.addAction(exitAction)
 
         #      Setup central panel
-        
+
         layout = QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(self.canvas)
@@ -703,20 +713,26 @@ class PltMainWindow(QMainWindow):
         referenceAction = QAction("Reference Point",self)
         referenceAction.triggered.connect(self.referenceButtonClicked)
         optionMenu.addAction(referenceAction)
-        
+
         # Do a default plot of the lens if one exits
         if getCurrentLens() == None:
             self.fileButtonClicked()
         else:
             self.lensPlot()
 
-        
+
     #        The basic buttons
 
+    def exitButtonClicked(self):
+        """
+        Exit buttom
+        """
+        #        sys.exit()
+        self.close()
 
     def fileButtonClicked(self):
         """
-        New File button. 
+        New File button.
         """
         fs = LensSetter(parent=self,closeAction=self.lensPlot)
 
@@ -727,7 +743,7 @@ class PltMainWindow(QMainWindow):
         m = MessageBox("Lens Information",getCurrentLens().getInfo(),parent = self)
         m.setWindowTitle("Information")
         m.show()
-    
+
     def waveButtonClicked(self):
         """
         Wavelength setter clicked
@@ -768,16 +784,16 @@ class PltMainWindow(QMainWindow):
     #     The plot method
 
     def plot(self):
-        """    
+        """
         Method to plot the actual image
         """
         self.figure.clear()      # Clear current figure
-        #       Use a subPlot() method to do the actual work 
+        #       Use a subPlot() method to do the actual work
         self.subPlot()
         #refresh the canvas
         self.canvas.draw()
 
-   
+
     def lensPlot(self):
         """
         The default lens plot
@@ -793,23 +809,23 @@ class PltMainWindow(QMainWindow):
         plt.ylabel("Height")
         plt.title("Diagram of lens " + getCurrentLens().title)
         self.canvas.draw()
-        
+
 class LensViewer(PltMainWindow):
     """
     Class to plot a lens the panel with a collimated beam of rays.
-    
+
     :param lens: the lens to plot (Default = None)
     :type lens: OpticalGroup or extending class.
     :param parent: Parent window if there is one (Default = None)
-    
+
     """
     def __init__(self, lens = None , parent=None):
         super(LensViewer, self).__init__(lens,parent)
 
         if getCurrentLens() != None:
-            self.plot() 
-        
-        
+            self.plot()
+
+
     def subPlot(self):
         """
         Method to do the actual plot, automatically called
@@ -829,7 +845,7 @@ class LensViewer(PltMainWindow):
         pencil *= getCurrentLens()       # Through lens
         pencil *= op         # To plane
 
-        
+
         # plot data
         getCurrentLens().draw(True,True)
         op.draw()
@@ -845,11 +861,11 @@ class AbberationViewer(PltMainWindow):
     """
     Class to plot the three aberration plots for a lens at choice of angles
     and wavelength
-    
+
     :param lens: the lens to plot (Default = None)
     :type lens: OpticalGroup or extending class.
-    :param parent: Parent window if there is one (Default = None)    
-    
+    :param parent: Parent window if there is one (Default = None)
+
     """
     def __init__(self, lens = None , parent=None):
         super(AbberationViewer, self).__init__(lens,parent)
@@ -864,9 +880,9 @@ class AbberationViewer(PltMainWindow):
         wa = WaveFrontAnalysis(getCurrentLens(),getDesignWavelength())
         wa.drawAberrationPlot(getCurrentAngle(),getCurrentWavelength())
 
-        
-        
-        
+
+
+
 class WaveFrontViewer(PltMainWindow):
     """
     Class to plot a lens the panel with rays
@@ -900,7 +916,7 @@ class WaveFrontViewer(PltMainWindow):
         self.interferometer.setTilt(Xtilt,Ytilt)
         self.interferometer.draw()
 
-        
+
 
 
     #     Wave button aclions
@@ -922,8 +938,8 @@ class WaveFrontViewer(PltMainWindow):
         tb.move(50,50)
         tb.resize(200,100)
         tb.show()
-        
-        
+
+
     def zernikeButtonClicked(self):
         m = MessageBox("Zernike Expansion w: {0:4.2f}".format(getDefaultWavelength()),repr(CurrentWaveFront),parent = self)
         m.setWindowTitle("Information")
@@ -931,7 +947,7 @@ class WaveFrontViewer(PltMainWindow):
 
 class OTFViewer(WaveFrontViewer):
     """
-    Class extending WaveFrontViewer to display OFT 
+    Class extending WaveFrontViewer to display OFT
     """
     def __init__(self,lens = None, parent = None):
         super(OTFViewer,self).__init__(lens,parent)
@@ -939,7 +955,7 @@ class OTFViewer(WaveFrontViewer):
     def displayPlot(self):
         CurrentWaveFront.plotOTF(128,"b")
 
-        
+
 class KnifeViewer(PltMainWindow):
     """
     Class to plot a lens the panel with rays
@@ -959,8 +975,8 @@ class KnifeViewer(PltMainWindow):
         kt.setWire(CurrentWire)
         kt.setReference(getReferencePointOption())
         kt.getImage().draw()                        # make and plot image
-        plt.title(getCurrentLens().title) 
-        
+        plt.title(getCurrentLens().title)
+
     #   Additional buttons in menue
 
     def knifeButtonClicked(self):
@@ -972,9 +988,9 @@ class KnifeViewer(PltMainWindow):
 
 class SpotViewer(PltMainWindow):
     """
-    Class to plot spot diagrams of a lens with a collimnated beam with options 
+    Class to plot spot diagrams of a lens with a collimnated beam with options
     to change angle, wavelength and plane of the spots.
-    
+
     :param lens: the lens to plot (Default = None)
     :type lens: OpticalGroup or extending class.
     :param parent: Parent window if there is one (Default = None)
@@ -1008,7 +1024,7 @@ class SpotViewer(PltMainWindow):
     def minusClicked(self):
         """
         Move the plane back along the optical axis
-        """        
+        """
         incrementPlaneShift(-self.delta)
         self.updatePlane()
 
@@ -1021,13 +1037,13 @@ class SpotViewer(PltMainWindow):
         p.move(50,50)
         p.resize(200,200)
         p.show()
-        
+
     def subPlot(self):
-        """   
+        """
         Method to set up the spot analysis, and trace the rays. This need to be called
         if any of the geometry of the sytsem changes.
         """
-        
+
         # Make a new SpotAnalysis object (which will trace the rays)
         self.spot = SpotAnalysis(getCurrentLens(),getCurrentAngle(),getReferencePointOption(),\
                                  getCurrentWavelength(),getDesignWavelength())
@@ -1047,5 +1063,5 @@ class SpotViewer(PltMainWindow):
 
 
 
-        
+
 

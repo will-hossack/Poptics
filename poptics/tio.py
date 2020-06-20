@@ -8,20 +8,20 @@ and a simple internal command handler and journal facility which is being
 developed.
 """
 
-from os import getenv, listdir
-from os.path import expanduser
+from os import listdir
+import os.path as p
 from datetime import datetime
 from poptics.vector import Vector2d, Vector3d, Angle
 import sys
 
 #               Internal globals
 __journalFile = None
-__tioinput = sys.stdin
+#__tioinput = sys.stdin
 __tiooutput = sys.stdout
 __tioerr = sys.stderr
 __tioesc = "%"
-__tioenv = "$"
-__tiosepar = "/"
+#__tioenv = "$"       # Now handedl by os.path
+#__tiosepar = "/"
 __tiocomment = "#"
 
 
@@ -48,7 +48,7 @@ def getString(prompt, default=None):
 
 def getFloat(prompt, default=None, min=None, max=None):
     """
-    Read a float from the terminal with optional default and range checking. 
+    Read a float from the terminal with optional default and range checking.
 
     :param prompt: the prompt to be displayed.
     :type prompt: str
@@ -68,7 +68,7 @@ def getFloat(prompt, default=None, min=None, max=None):
         min = float("-Inf")
     if max == None:
         max = float("Inf")
-    while True:  
+    while True:
         val = __getInput(prompt,default)
         try:                                             # Work out what happened
             if isinstance(val,str):                      # If str eval what been given
@@ -83,10 +83,10 @@ def getFloat(prompt, default=None, min=None, max=None):
            __tioerr.write("tio.getFloat.error: conversion of {0:s} failed\n".format(str(val)))
 
 
-#        
+#
 def getInt(prompt,default = None ,min = None ,max = None):
     """
-    Read an int from the terminal with optional default and range checking. 
+    Read an int from the terminal with optional default and range checking.
     The default is decimal but also binary (prefix 0b) , oct (prefix 0o) , hex prefix (0x) is also supported.
 
     :param prompt: the prompt string to be displayed.
@@ -105,7 +105,7 @@ def getInt(prompt,default = None ,min = None ,max = None):
         min = -sys.maxsize - 1
     if max == None:
         max = sys.maxsize
-    while True:  
+    while True:
         val = __getInput(prompt,default)                 # Get input
         try:                                             # Work out what happened
             if isinstance(val,str):                      # If str eval what been given
@@ -124,10 +124,10 @@ def getInt(prompt,default = None ,min = None ,max = None):
         except:
             __tioerr.write("getInt.error: conversion of {0:s} failed\n".format(str(val)))
 
-       
+
 def getBool(prompt,default = None):
     """
-    Read a boolean from the terminal with checking. 
+    Read a boolean from the terminal with checking.
     It will accept: yes / no , true / false in lower or upper case,  1 / 0 or any logical expression.
 
     :param prompt: the prompt to be displayed.
@@ -143,8 +143,8 @@ def getBool(prompt,default = None):
         try:
             if isinstance(val,bool):
                 return val
-            if isinstance(val,str):                      # if str 
-                bval = val.lower().strip()               
+            if isinstance(val,str):                      # if str
+                bval = val.lower().strip()
                 if bval.startswith("yes") or bval.startswith("true"):
                     return True
                 if bval.startswith("no") or bval.startswith("false"):
@@ -156,11 +156,11 @@ def getBool(prompt,default = None):
         except:
             __tioerr.write("tio.getBool.error: conversion of {0:s} failed\n".format(str(val)))
 
-       
+
 
 def getComplex(prompt, default = None, maxabs = None):
     """
-    Read a complex from the terminal with optional default and range checking of 
+    Read a complex from the terminal with optional default and range checking of
     the abs.
 
     :param prompt: the prompt to be displayed.
@@ -198,7 +198,7 @@ def getVector3d(prompt, default = None, maxabs = None):
     """
     Read a Vector3d from the terminal with checking.
 
-    Format from terminal may be 'x,y,z'   OR   '[x,y,z]',  also each componet 
+    Format from terminal may be 'x,y,z'   OR   '[x,y,z]',  also each componet
     will be evaluated.
 
     :param prompt:  the prompt to be displayed
@@ -241,7 +241,7 @@ def getAngle(prompt, default = None):
     :param  default: the default value (may be None)
     :type default: Angle
     :return: the Angle (note will always return an Angle)
-    
+
     Note: input values are in radians.
 
     """
@@ -266,7 +266,7 @@ def getAngleDegrees(prompt, default = None):
     :param default: the default value (may be None), this is assumes to be in radians.
     :type default: Angle
     :return: the Angle (note will always return an Angle in radians)
-    
+
     Note: input values are in degrees but the returned Angle values are in radians.
 
     """
@@ -310,7 +310,7 @@ def getVector2d(prompt, default = None, maxabs = None):
         try:
             if isinstance(val,str):          # Its a string
                 val = eval(val)              # Eval list
-                
+
             vec = Vector2d(val)
 
             if abs(vec) <= maxabs:
@@ -322,11 +322,11 @@ def getVector2d(prompt, default = None, maxabs = None):
             __tioerr.write("getVector2d.error: conversion of {0:s} failed\n".format(str(val)))
 
 
-       
+
 def getExpandedFilename(name):
     """
-    Method to expand a (Unix) filename and process environmental variable 
-    with $env or ~username prefix to a filename. 
+    Method to expand filename and process environmental variable
+    with $env or ~username prefix to a filename.
 
     :param name: with original name, assumed to contains NO leading white spaces
     :param type: str
@@ -334,12 +334,16 @@ def getExpandedFilename(name):
 
     Note this method does not prompt for input from the terminal.
 
-    Typical input is $HOME/data.data or ~fred/data.dat, where $HOME is env name and fred is username. 
-    This works under Linix and MacOS, untested on other OS.
-
-
+    Updated to use the os.path.expanduser() and os.path.expandvars()
+    so should work on Unix/MacOs and Windows.
     """
-    if name.startswith(__tioenv) or name.startswith("~") :
+
+    name = p.expanduser(name)
+    name = p.expandvars(name)
+    return name
+
+
+    """    if name.startswith(__tioenv) or name.startswith("~") :
         i = name.find(__tiosepar)               # Name seperator
         if i < 0 :
             i = len(name)                      # No seperator
@@ -355,6 +359,7 @@ def getExpandedFilename(name):
         return prename + postname       # Return processed name
     else:
         return name                     # No pre characters, just return name
+    """
 
 
 def getFilename(prompt, defaulttype = None, defaultname = None):
@@ -366,7 +371,7 @@ def getFilename(prompt, defaulttype = None, defaultname = None):
     :type prompt: str
     :param defaulttype: the default extension which will be added if not supplied, (default to None)
     :type defailttype: str
-    :param defaultname: the defaault filename, (defaults to None)
+    :param defaultname: the default filename, (defaults to None)
     :type defaultname: str
     :return: the filename as a str which has been expanded to deal with logical names and username prefix.
 
@@ -374,14 +379,16 @@ def getFilename(prompt, defaulttype = None, defaultname = None):
     val = getString(prompt,defaultname)
     filename = getExpandedFilename(val)                       # Expand to process env/user
     if defaulttype != None:
-        if not filename.endswith(defaulttype):
-            filename += "." + defaulttype
+        defaultext = "." + defaulttype
+        name,ext = p.splitext(filename)
+        if ext != defaultext:
+            filename += defaultext
     return filename
 
 
 def openFile(prompt,key = "r",defaulttype = None, defaultname = None):
     """
-    Method to open a text file with sanity checking, optional defaults and reprompt on failure. 
+    Method to open a text file with sanity checking, optional defaults and reprompt on failure.
     This is the main used callable function to open files.
 
     :param prompt:  the prompt to be displayed
@@ -393,7 +400,7 @@ def openFile(prompt,key = "r",defaulttype = None, defaultname = None):
     :param defaultname: the defaault filename, (defaults to None)
     :type defaultname: str
     :return: the the opened file descriptor.
-    
+
 
     The file names is processded to expand environmental variable and user names\
     so for example $ENV/dir/file.data or ~user/dir/file.data are expanded
@@ -412,8 +419,8 @@ def tprint(*args):
     """
     Simply alternative to print that will print to the sysout and also to journal if there is a journal file open.
     Output to the journal file be prefixed with a comment character.
-    
-    :param args: argumemnt list  each will be conveterd to a str() and concatinated to a single string. 
+
+    :param args: argumemnt list  each will be conveterd to a str() and concatinated to a single string.
 
     Also newline will be appended if not present and the print buffer will be flushed.
 
@@ -430,11 +437,11 @@ def tprint(*args):
         string += "\n"
 
     __tiooutput.write(string)           # Write string and flush output buffer
-    __tiooutput.flush()          
-    
+    __tiooutput.flush()
+
     if __journalFile != None:           # Journal file open, so write string, but with prefix of "# "
         __journalFile.write(__tiocomment + " " + string)
-    
+
 
 #
 #
@@ -449,8 +456,8 @@ def getOption(prompt,options,default = None):
     :param default: the default option (int in range 0 -> < len(options)) (default to None)
     :type default: int
     :return: truple selected option, opt, so (opt,options[opt])
-    
-    Each option is tested for existance and uniquness. It will fail an re-prompt as required. 
+
+    Each option is tested for existance and uniquness. It will fail an re-prompt as required.
     There is also a simple internal 'help' option that pints the list of options.
 
     """
@@ -475,7 +482,7 @@ def getOption(prompt,options,default = None):
                     opt = i
                 else:
                     opt = -2                                 # Not unique
-            i += 1 
+            i += 1
 
         if opt >= 0:                                         # success, one found return
             return opt,options[opt]
@@ -486,13 +493,13 @@ def getOption(prompt,options,default = None):
             pl = ""
             for o in options:
                 pl += " [{0:s}]".format(o)
-            
+
             tprint("Options are : {0:s}".format(pl))
         elif opt == -1:                                     # Unknown option
             __tioerr.write("tio.getOption.error: Invalid option {0:s}, help for list of options.\n".format(val))
         elif opt == -2:                                     # Non-unique option
             __tioerr.write("tio.getOption.error: Non-unique option {0:s}, help for list of options.\n".format(val))
-                  
+
 #
 #
 def __formatPrompt(prompt,default = None):
@@ -512,7 +519,7 @@ def __formatPrompt(prompt,default = None):
                       format(default)
         else:                               # assume is string or obeys str
             prompt += " (default : {0:s}) : ".format(str(default))
-            
+
     #             Add a " : " at end of there is not at least one ":"
     #
     if prompt.find(":") < 0 :
@@ -532,10 +539,7 @@ def __getInput(prompt,default):
     p = __formatPrompt(prompt,default)
     #
     while True:
-        #        __tiooutput.write(p)           # Remove due to iPython / Juypeter problem
-        #        __tiooutput.flush()
-        #        val = __tioinput.readline()
-        val = input(p)                 #       Use the Python 3 "input" method        
+        val = input(p)                 # Use the Python 3 "input" method
         i = val.find(__tiocomment)     # is there a comment
         if (i >= 0):                   # comment found
             val = val[0:i]             # Kill comment
@@ -548,11 +552,11 @@ def __getInput(prompt,default):
             if default != None:
                 val = default          # Take default
                 break
-    
-    if __journalFile != None:          # Journal to stream open 
+
+    if __journalFile != None:          # Journal to stream open
         __journalFile.write("{0:s}    # {1:s}\n".format(str(val),p))
     return val
-        
+
 
 #
 #
@@ -571,7 +575,7 @@ def setJournal(filename = None):
 
     if filename == None:             # No file give.
         if __journalFile != None:    # Close Journal file if open
-            __journalFile.write(__tiocomment + "             closed at {0:s}\n".format(str(datetime.now()))) 
+            __journalFile.write(__tiocomment + "             closed at {0:s}\n".format(str(datetime.now())))
             __journalFile.close()
             __journalFile = None     # Null journal file
             tprint("tio.info: Journal off.")
@@ -584,26 +588,26 @@ def setJournal(filename = None):
     try:
         __journalFile = open(fn,"w")
         __journalFile.write("#             tio Journal file\n")
-        __journalFile.write("#             opened at {0:s}\n".format(str(datetime.now()))) 
+        __journalFile.write("#             opened at {0:s}\n".format(str(datetime.now())))
         tprint("tio.info: Journal on.")
     except IOError:
         __tioerr.write("setJournal.error: file open of {0:s} failed\n".format(fn))
         if getBool("Manually open journal file",False):
             __journalFile = openFile("Journal File","w","tio")
         else:
-            __journalFile = None     
+            __journalFile = None
 
-#   
+#
 #
 def __tiocommand(cmd):
     """ Internal command handler, limited use at the moment, but will be expanded
     """
     cmd = cmd[1:].strip()                # Remove % and clean up
     if cmd.lower().startswith("beep"):   # Output a beep to the terminal
-        __tiooutput.write("\a")          
+        __tiooutput.write("\a")
     elif cmd.startswith("exit"):         # Exit quitely
         sys.exit(0)
-    elif cmd.lower().startswith("journal"):   # Open a journal file 
+    elif cmd.lower().startswith("journal"):   # Open a journal file
         tokens = cmd.split()
         filename = tokens[1].strip()
         setJournal(filename)
@@ -613,7 +617,7 @@ def __tiocommand(cmd):
         tokens = cmd.split()                # Break into tokens
         if len(tokens) < 2:                 # if no directory, then current
             d = ""
-            fulldir = "." 
+            fulldir = "."
         else:
             d = tokens[1].strip()            # Extract directory name
             fulldir = getExpandedFilename(d) # expand name if starts with $ or ~
@@ -625,8 +629,8 @@ def __tiocommand(cmd):
                     tprint(d,filename)
         except OSError :                      # Catch error of not directory
             tprint("Unknown directory : ",d)
-        
-    else: 
+
+    else:
         __tioerr.write("toi.command error: unknown command {0:s}, ignored.\n".format(cmd))
- 
+
 

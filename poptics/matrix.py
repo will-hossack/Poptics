@@ -10,7 +10,7 @@ from poptics.vector import Vector3d, Angle, Unit3d
 from matplotlib.pyplot import plot, legend
 import math
 import poptics.tio as tio
-from os.path import join
+from os.path import join,isabs
 from importlib.resources import path
 
 #       Set the gkobal Matrixpath to point to where the lines are
@@ -947,7 +947,7 @@ class DataBaseMatrix(ParaxialGroup):
         if not fn.endswith("matrix"):        # Append ".lens" if not given
                 fn += ".matrix"
 
-        if not fn.startswith("/"):
+        if not isabs(fn):      #if not fn.startswith("/"):
             fn = join(MatrixPath,fn)
 
         file = open(fn,"r")

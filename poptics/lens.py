@@ -10,7 +10,7 @@ from poptics.wavelength import getDesignWavelength,AirIndex,MaterialIndex,Cauchy
 import poptics.analysis as ana     # This needs fixed
 import poptics.tio as tio
 from matplotlib.pyplot import plot
-from os.path import join
+from os.path import join,splitext,isabs
 from importlib.resources import path
 
 with path("poptics","lenses") as p:
@@ -35,7 +35,7 @@ def setCurrentLens(lens):
 def getCurrentLens():
     """
     Function to get the current default lens, if this is not
-    overriddent it is initally set to the default SimpleSinglet()
+    overridden it is initally set to the default SimpleSinglet()
     This is typically used in the GUI interface
 
     :return: Current default lens
@@ -43,9 +43,6 @@ def getCurrentLens():
     return CurrentLens
 
 
-
-
-#
 class OpticalGroup(list):
     """
     Class to hold a list of surfaces in order they will be encourtered by a ray.
@@ -1434,28 +1431,33 @@ class DataBaseLens(Lens):
         Lens.__init__(self,0.0)         # Create a blank lens
 
         #
-        #         Open file, if None then prompt via tio interface
+        #         Open file, if None then prompt via tio interface and
+        #         also trap errors
         #
-        if fn == None:
-            #lensfile = tio.openFile("Lens file","r","lens")
-            fn = tio.getFilename("Lens file","lens")
-        if not fn.endswith("lens"):        # Append ".lens" if not given
+        while True:
+            if fn == None:
+                fn = tio.getFilename("Lens file","lens")
+            #      Add .lens extersion is not given
+            root,ext = splitext(fn)
+            if ext != ".lens":
                 fn += ".lens"
+            #      Add lens path to default location
+            if not isabs(fn):           #fn.startswith("/"):
+                fn = join(LensPath,fn)
 
-        if not fn.startswith("/"):
-            fn = join(LensPath,fn)
+            try:   #  Try and open the lens file and read it
+                lensfile = open(fn,"r")
+                lenslines = lensfile.readlines()
+                lensfile.close()
+                break
+            except IOError:                                           # Error
+                tio.tprint("Failed to open file : ",fn)
+                fn = None
 
-        lensfile = open(fn,"r")
 
-        """else:
-            fn = tio.getExpandedFilename(fn)   # Sort out logicals
-            if not fn.endswith("lens"):        # Append ".lens" if not given
-                fn += ".lens"
-            lensfile= open(fn,"r")             # open file
-        """
-        #          read file and process one line at a time
+        #          Process the read file  one line at a time
         #
-        for line in lensfile.readlines():
+        for line in lenslines:
             line = line.strip()
             if not line.startswith("#") and len(line) > 0:   # Kill comments and blanks
                 token = line.split()
@@ -1529,7 +1531,7 @@ class DataBaseLens(Lens):
                 else:
                     print("Unknown token : " + str(token[0]))
 
-            lensfile.close()             # close file
+            #lensfile.close()             # close file
 
 
 

@@ -2,12 +2,16 @@
 Terminal Input / Output (tio)
 =============================
 
-The Terminal input/output module provides a set of simple to call command line
-functions that read the and write to the terminal with defaults, range checking and error correction.
-There is also a simply option selector and escape commands that allows simple interactive
-applications to be written with the miminium of effort.
-This modulue is used for all terminal inout in the examples and test code and is also called
-for error recovery when wrong lens files or materials are specified. 
+The Terminal input/output module that provides a set of simple to call command line
+functions that read / write to \ from the terminal with defaults, range checking
+and error correction. There is also a simply option selector and
+escape commands that allows simple interactive applications to be written
+with the miminium of effort. This modulue is used for all terminal inout in
+the examples and test code and is also called for error recovery when
+wrong lens files or materials are specified.
+
+This module has been written and mainly tested on Linix and MacOs bit should work
+under Windows, but this has not been tested.
 
 Reading Basic Types
 ===================
@@ -30,8 +34,8 @@ sanity checking. These functions are:
 Reading Vectors and Angles
 ==========================
 
-The following three function real in the specific vector and angle classes used in the
-poptics package, again with prompt, defaults and error checking.
+The following three function real in the specific vector and angle
+classes used in the poptics package, again with prompt, defaults and error checking.
 
 .. autofunction:: poptics.tio.getVector2d
 
@@ -50,7 +54,7 @@ a file descriptor, this being
 .. autofunction:: poptics.tio.openFile
 
 
-Finer control can be optained from 
+Finer control can be optained from
 
 .. autofunction:: poptics.tio.getFilename
 
@@ -58,14 +62,15 @@ Which will prompt for the filename and return the string, but not open the file.
 
 There is also an useful utility function that takes a string comtaining logical variables or
 user directives and expand to a full file name.
-		  
-.. autofunction:: tio.getExpandedFilename
+
+.. autofunction:: poptics.tio.getExpandedFilename
 
 Option and Menu
 ===============
 
-There is simple options / menu function that prompts for a option, and return the option number and
-option as a truple. This allows simple commnad line interactive programs to be easily built.
+There is simple options / menu function that prompts for a option,
+and return the option number and name as a truple.
+This allows simple commnad line interactive programs to be easily built.
 
 .. autofunction:: poptics.tio.getOption
 
@@ -73,7 +78,7 @@ Print Function
 ==============
 
 There is a simple print function that replaces to standard print(), this is independant of
-Python 2/3 problems and also journal to a file if this option is set. 
+Python 2/3 problems and also journal to a file if this option is set.
 
 .. autofunction:: poptics.tio.tprint
 
@@ -144,7 +149,7 @@ set a default extension of data which will be appended if not given.
      import poptics.tio as tio
      file = tio.openFile("File","w","data","$Home/output")
      file.write("Hello World\n")
-       
+
 Simple use of the options so select one of 4 options number 1 ("go") as the default.
 
    .. code-block:: python

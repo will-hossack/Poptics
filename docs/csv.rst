@@ -3,18 +3,20 @@ CSV File Read and Write
 =======================
 
 There are two simple CSV file functions to read and write simple CSV of float data direct
-to and from numpy.ndarray. There are:
+to and from numpy.ndarray.
+
+These are:
 
 .. autofunction:: poptics.csvfile.readCSV
 
 This funtion will also ignore comment lines starting with \# and also blank lines, but there is no
 other processing. The actual reads and done with the standard csv.read() function.
-		  
+
 .. autofunction:: poptics.csvfile.writeCSV
 
 The written files are simple comma delimited file with floats is 12.5e format. The actual write is done
 by default action of csv.write()
-		  
+
 Examples
 ========
 
@@ -28,7 +30,7 @@ two numpy ndaray by:
      # Get filename
      fn = getFilename("CSV file","csv")
      xData , yData = readCSV(fn)
-     		
+
 While is the CSV file has three columns the first and third columum, with the second ignored,
 can be read with the following code:
 
@@ -58,5 +60,5 @@ file with no header can be done with:
     print("Number of lines written : " + str(n))
 
 
-These functions are used in a number of examples to read or write data, but are not used internally
-in the poptics package.
+These functions are used in a number of examples to read or write data,
+but are not used internally in the poptics package.

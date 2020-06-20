@@ -24,8 +24,8 @@ def main():
 
     #      Do the plot
     colour = WavelengthColour(wavelength)
-    plt.plot(zData,rData,c = colour)
-    plt.plot(zData,-rData,c = colour)
+    plt.plot(zData,rData,color = colour)
+    plt.plot(zData,-rData,color = colour)
     plt.show()
 
 main()
