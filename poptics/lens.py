@@ -7,7 +7,7 @@ from poptics.surface import OpticalPlane,ImagePlane,CircularAperture,IrisApertur
 from poptics.matrix import ParaxialPlane,ParaxialMatrix,DielectricMatrix,ParaxialGroup
 from poptics.vector import Vector3d
 from poptics.wavelength import getDesignWavelength,AirIndex,MaterialIndex,CauchyIndex,PhotopicPeak
-import poptics.analysis as ana     # This needs fixed
+from poptics.analysis import CurvedOpticalImage
 import poptics.tio as tio
 from matplotlib.pyplot import plot
 from os.path import join,splitext,isabs
@@ -1252,13 +1252,15 @@ class AchromaticDoublet(Doublet):
 #
 class Eye(Lens):
     """
-    Class to model the eye using values from Hyperphysics and guesses at Abbe Numbers
-    for the eye lenses
+    Class to model the eye using values from Hyperphysics and guesses at
+    Abbe Numbers for the eye lenses and fluids.
 
-    :param pt: group point of eye, front surface of cornea. (Defauylt = 0.0)
+    :param pt: group point of eye, front surface of cornea. (Default = 0.0)
     :type pt: Vector3d or float.
 
-    :
+    Note this system also includes the rentia at the back flocal plane
+    of the lenses.
+
     """
     def __init__(self,pt = 0.0, pixels = 0):
         """
@@ -1274,14 +1276,13 @@ class Eye(Lens):
         #
         #                      Add Cornea with surface curvatures and index from Hyperphysics
         #
-        self.add(SphericalSurface(0.0, 0.13774, 4.0, CauchyIndex(1.376,50.0)))
+        self.add(SphericalSurface(0.0 , 0.13774, 4.0, CauchyIndex(1.376,50.0)))
         self.add(SphericalSurface(0.45, 0.17606, 4.0, CauchyIndex(1.336,53.0)))
-
-
-        #                      Add pupil as a iris aperture of 2.5 mm radius
+        #
+        #                      Add pupil as a iris aperture of 2.0 mm radius
         #
         self.add(IrisAperture(3.0,self.pupilSize))
-
+        #
         #                      Add cytstaline lens with default paramters
         #
         self.add(SphericalSurface(self.lensfrontposition, self.lensfrontcurvature, 3.0,\
@@ -1293,15 +1294,13 @@ class Eye(Lens):
         self.maxFocalLength = self.backFocalLength(PhotopicPeak)
 
         #                      Find back focal plane at peak sensitivity
-
-
-        bfp = self.paraxialGroup(PhotopicPeak).backFocalPlane() - self.point.z
-
+        self.bfp = self.paraxialGroup(PhotopicPeak).backFocalPlane() - self.point.z
+        #
         #                      Add in curved image plane as retina (curve of 1/12 mm)
         if pixels == 0:
-            self.retina = SphericalImagePlane(bfp,-8.333e-2,4.0)
+            self.retina = SphericalImagePlane(self.bfp,-8.333e-2,4.0)
         else:
-            self.retina = ana.CurvedOpticalImage(bfp,-8.333e-1, 4.0, 4.9, pixels, pixels)
+            self.retina = CurvedOpticalImage(self.bfp,-8.333e-1, 4.0, 4.9, pixels, pixels)
         self.add(self.retina)
 
 
@@ -1309,14 +1308,29 @@ class Eye(Lens):
         """
         Get the eye retina
 
+        :return: the retina
         """
         return self.retina
 
 
+    def incrementRetina(self,delta = 0.0):
+        """
+        Method to displace the retina a specified distance from it
+        defaults (focused) position.
+
+        A positive delta will make the eye myopic (short sighted) while
+        a negative delta will make it hyperopic (far sighted)
+
+        :param delta: the retina shift
+        """
+        pt = self.bfp + delta
+        self.retina.point = Vector3d(0,0,pt)
+        return self
+
     def accommodation(self,a):
         """
-        Method to simulate accomodation by altering the thickness and curvatutes of
-        the crystaline lens
+        Method to simulate accomodation by altering the thickness and
+        curvatutes of the crystaline lens
 
         :param a: the accomodation parameter
         :type a: float
@@ -1349,8 +1363,10 @@ class Eye(Lens):
 
     def setFocalLength(self,f):
         """
-        Method to set the local length by chaning the accomodation using an impirical fit
-        :param f: the focal length
+        Method to set the local length by changing the accomodation using an
+        impirical fit.
+
+        :param f: the focal length in mm
         :type f: float
 
         """
@@ -1369,8 +1385,8 @@ class Eye(Lens):
 
     def setNearPoint(self,distance):
         """
-        Method to use the accommoation to set the NearPoint, this needs be a simple itterative
-        scheme since floal length an principal planes move.
+        Method to use the accommoation to set the NearPoint, this needs be a
+        itterative scheme since focal length and principal planes move.
 
         :param distance: near point distance from front Nodal point in mm.
         :type distance: float
@@ -1383,7 +1399,7 @@ class Eye(Lens):
         da = 0.1
         a = 1.1           # Initial guess
         while True:
-            print("a valie is : " + str(a))
+
             self.accommodation(a)
             ipt = self.imagePoint(opt,PhotopicPeak)
             delta = ipt.z - self.retina.point.z

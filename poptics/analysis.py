@@ -4,8 +4,8 @@ Set of classes of high level classes for analysis of optical system.
 """
 import poptics.ray as ray
 from poptics.psf import Psf,SpotDiagram
-from poptics.surface import OpticalPlane, ImagePlane,SurfaceInteraction,SphericalSurface,\
-        KnifeAperture,CircularAperture
+from poptics.surface import OpticalPlane,ImagePlane,SurfaceInteraction,\
+    SphericalImagePlane, KnifeAperture,CircularAperture
 from poptics.wavelength import Default,TriColour,WavelengthColour,AirIndex,getDefaultWavelength,\
     getDesignWavelength
 from poptics.vector import Vector2d,Vector3d,Unit3d,Angle
@@ -15,22 +15,22 @@ import math
 
 class TargetPlane(ImagePlane):
     """
-    For a target plane, being at ImagePlane with target points or various types. 
+    For a target plane, being at ImagePlane with target points or various types.
     Targets are held as Vector2d in the local plane coordinates.
 
-    :param pt: the reference point for the target plane (Default = 0.0). 
+    :param pt: the reference point for the target plane (Default = 0.0).
     :type pt: float of Vector3d
     :param xsize: x size of plane (Default = 100mm)
     :type xsize: float
     :param ysize: ysize or target plane (Default = xsize )
     :type ysize: float
-    :param wave: wavelength of targets (Default = optics.wavelength.Default)
-    :type wave: float
+    :param wavelengh: wavelength of targets (Default = optics.wavelength.Default)
+    :type wavelength: float
 
     The inital TragetPlane is empty. use .add() or .addGrid() to add targets.
     """
-    
-    def __init__(self,pt = 0.0 ,xsize = 100.00, ysize = None,wave = Default):
+
+    def __init__(self,pt = 0.0 ,xsize = 100.00, ysize = None,wavelength = Default):
         """
         Constuctor with
         """
@@ -40,7 +40,7 @@ class TargetPlane(ImagePlane):
             ImagePlane.__init__(self,pt,2*pt.getRadius())
         else:
             ImagePlane.__init__(self,pt,xsize,ysize)   # Initialse underlying ImagePlane
-        self.wavelength = wave
+        self.wavelength = wavelength
         self.targets = []                          # List of targets to be added
 
 
@@ -50,16 +50,16 @@ class TargetPlane(ImagePlane):
         Update str
         """
         return ImagePlane.__str__(self) + " targets : {0:d}".format(len(self.targets))
-        
+
     def add(self,target,y = None):
         """
-        Add a target, or list of targets. 
+        Add a target, or list of targets.
 
-        :param target: target or list of to be added. 
+        :param target: target or list of to be added.
         :param y: y component if target is x,y pair
         """
 
-        
+
         if isinstance(target,ray.RayPencil):    # Deal with ray pencil
             for r in target:
                 if r:
@@ -76,7 +76,7 @@ class TargetPlane(ImagePlane):
             self.targets.append(Vector2d(target))
         elif isinstance(target,float):          # Assume x,y given
             self.tragets.append(Vector2d(target,y))
-                     
+
         else:
             raise TypeError("analysis.TargetPlane.illegal type")
 
@@ -95,7 +95,7 @@ class TargetPlane(ImagePlane):
         odd number across array so there will always be one
         at (0,0)
         """
-        
+
         dx = self.xsize/(xn - 1 + 0.1)
         #        dx = 0.5*self.xsize/(xn/2 + 0.1)
         if yn > 0 :
@@ -114,12 +114,12 @@ class TargetPlane(ImagePlane):
                      self.add(Vector2d(x,y))
         return self
 
-    def rayPencil(self,pt_or_u,wave = Default, intensity = 1.0):
+    def rayPencil(self,pt_or_u,wavelength = Default, intensity = 1.0):
         """
         Get an intensity RayPenci, one ray from each target
-        
-        :param pt_or_u:  Vector3d or Unit3d, of Position each ray will pass through this point or direction of rays, this        
-        :param wave: wavelength, (defaults of Default)
+
+        :param pt_or_u:  Vector3d or Unit3d, of Position each ray will pass through this point or direction of rays, this
+        :param wavelength: wavelength, (defaults of Default)
         :param intensity: intensity, (defaults to 1.0)
         """
         pencil = ray.RayPencil()
@@ -130,12 +130,12 @@ class TargetPlane(ImagePlane):
                 u = Unit3d(pt_or_u)
             else:
                 u = Unit3d(pt_or_u - pos)
-            r = ray.IntensityRay(pos,u,wave,intensity)
+            r = ray.IntensityRay(pos,u,wavelength,intensity)
             pencil.append(r)
         return pencil
 
-    
-    def getPencils(self,ca,key = "array", nrays = 10, wave = Default, index = AirIndex()):
+
+    def getPencils(self,ca,key = "array", nrays = 10, wavelength = Default, index = AirIndex()):
         """
         Method to get RayPencils from each target in trem in an itterator
 
@@ -146,15 +146,15 @@ class TargetPlane(ImagePlane):
         :param index: Starting index, (Default = AirIndex())
 
         """
-        self.wavelength = wave
+        self.wavelength = wavelength
         for t in self.targets:
             if t:                              # Check target os valid
                 pt = self.getSourcePoint(t)    # Target as SourcePoint in global coordinates
                 pencil = ray.RayPencil().addBeam(ca,pt,key,nrays,self.wavelength,index = index)
                 yield pencil
-        
 
-        
+
+
     def draw(self):
         """
         Draw the plane to the current axis.
@@ -172,7 +172,7 @@ class TargetPlane(ImagePlane):
         #       Now plot the targets at "x"
         xpt = []
         ypt = []
-        
+
         for t in self.targets:
             pt = self.getSourcePoint(t)
             xpt.append(pt.x)
@@ -184,11 +184,11 @@ class TargetPlane(ImagePlane):
 
 class OpticalImage(ImagePlane):
     """
-    Class to hold an image in a plane with a sampling grid. The actual image is held in a numpy array. 
+    Class to hold an image in a plane with a sampling grid. The actual image is held in a numpy array.
     If the first parameter is an ImagePlace then the reference point and x/y size will be automatically
     taken from the from this and the xsize / ysize parameters ignored.
 
-    :param pt: reference point, or ImagePlane (Default = (0,0,0)
+    :param pt: reference point, or ImagePlane (Default = 0.0)
     :type pt: ImagePlane or Vector3d or float
     :param xpixel: xpixel size of image (default = 256) OR nmpy array of floats
     :type xpixel_or_im: numpy.array or int
@@ -198,11 +198,11 @@ class OpticalImage(ImagePlane):
     :type xsize: float
     :param ysize: y size of plane (Default = 200)
     :type ysize: float
-    
+
 
     """
-    
-    def __init__(self,pt =  Vector3d() ,xpixel = 256, ypixel = None, xsize = 200, ysize = None):
+
+    def __init__(self,pt = 0.0  ,xpixel = 256, ypixel = None, xsize = 200, ysize = None):
         """
         Form the OpticalImage with either blank array of nmpy image array
         """
@@ -213,7 +213,7 @@ class OpticalImage(ImagePlane):
             if ysize == None:
                 ysize = xsize
             ImagePlane.__init__(self,pt,xsize,ysize)             # Set underying ImagePlane
-            
+
         if isinstance(xpixel,int):
             if ypixel == None:
                 ypixel = xpixel
@@ -244,7 +244,7 @@ class OpticalImage(ImagePlane):
         """
         x = self.xsize*(i/self.xpixel - 0.5)
         y = self.ysize*(j/self.ypixel - 0.5)
-        
+
         return self.getSourcePoint(x,y,self.image[i,j])
 
 
@@ -256,10 +256,10 @@ class OpticalImage(ImagePlane):
         :return: SurfaceInteraction.
 
         """
-        
+
         #       get interaction with super class
         info = ImagePlane.getSurfaceInteraction(self,r)
-        
+
         #            Add ray to pixel
         if not math.isnan(info.position.x) or not math.isnan(info.position.y) :
             i = int(round(self.xpixel*(info.position.x + self.xsize/2 - info.point.x)/self.xsize))
@@ -270,10 +270,10 @@ class OpticalImage(ImagePlane):
                 self.image[i,j] += r.intensity               # Add it to the image
 
         #          Retun info to calling object
-        return info 
+        return info
 
 
-    def getRayPencil(self,ca,i,j,nrays = 5,wave = Default):
+    def getRayPencil(self,ca,i,j,nrays = 5,wavelength = None):
         """
         Method to get a RayPencil from the i,j image pixel.
 
@@ -287,20 +287,21 @@ class OpticalImage(ImagePlane):
         :param wave: wavelength of rays (default = Default)
         :type wave: float
         :return: RayPencil with an added Beam.
-        
+
         Note will return None if the pixel intensity is 0.0
         """
+        wavelength = getDefaultWavelength(wavelength)
         source = self.getPixelSourcePoint(i,j)
         if source.getIntensity() == 0.0:
             return None
         else:
-            return ray.RayPencil().addBeam(ca,source,"array",nrays,wave)
+            return ray.RayPencil().addBeam(ca,source,"array",nrays,wavelength)
 
-    def getImage(self, lens, ip, nrays = 5, wave = Default):
+    def getImage(self, lens, ip, nrays = 5, wavelength = None):
         """
         Method to get the image of OpticalPlane where the image localion is specifed
         by the supplied ImagePlane.
-        
+
         :param lens: the lens system
         :param ip: ImagePlane
         :param nrays: number of rays on radius
@@ -317,14 +318,14 @@ class OpticalImage(ImagePlane):
         xr = range(0,self.xpixel)
         for j in range(0,self.ypixel):
             for i in xr:
-                pencil = self.getRayPencil(lens, i, j, nrays, wave)
+                pencil = self.getRayPencil(lens, i, j, nrays, wavelength)
                 if pencil != None:                   # Will be None if pixel intensity is zero, so don't bother
                     pencil *= lens
                     pencil *= image
 
         return image                                 # Return the image
 
-    def getSystemImage(self,lens,mag,nrays = 5, wave = Default, design = None):
+    def getSystemImage(self,lens,mag,nrays = 5, wavelength = None, design = None):
         """
         Method to get the image of the object plane from and imaging system with specified lens and magnification.
         The location of the object and image planes are given by paraxial optics using the design wavelength.
@@ -340,18 +341,17 @@ class OpticalImage(ImagePlane):
         :param design: wavelength used for the paraxial location of the planes (Default = None) (same as wave)
 
         """
-        if design == None:
-            design = wave
+        design = getDefaultWavelength(design)
 
         #     Get location of object and image planes and design wavelength
         obj,ima = lens.planePair(mag,self.xsize,self.ysize,design)
         self.setPoint(obj.point)        # Set self to correct location
 
-        im = self.getImage(lens,ima,nrays,wave)     # get the image
+        im = self.getImage(lens,ima,nrays,wavelength)     # get the image
 
         return im
 
-        
+
 
     def addTestGrid(self, xgap = 10, ygap = None, intensity = 1.0 ):
         """
@@ -367,7 +367,7 @@ class OpticalImage(ImagePlane):
         """
         if ygap == None:
             ygap = xgap
-        
+
         xw = xgap*(self.xpixel//xgap)
         yw = ygap*(self.ypixel//ygap)
 
@@ -390,7 +390,7 @@ class OpticalImage(ImagePlane):
 
 
 
-        
+
 
 class ColourImage(ImagePlane):
     """
@@ -407,7 +407,7 @@ class ColourImage(ImagePlane):
             if ysize == None:
                 ysize = xsize
             ImagePlane.__init__(self,pt,xsize,ysize)             # Set underying ImagePlane
-            
+
         if isinstance(xpixel,int):
             if ypixel == None:
                 ypixel = xpixel
@@ -426,10 +426,10 @@ class ColourImage(ImagePlane):
         :return: SurfaceInteraction.
 
         """
-        
+
         #       get interaction with super class
         info = ImagePlane.getSurfaceInteraction(self,r)
-        
+
         #            Add ray to pixel
         if not math.isnan(info.position.x) or not math.isnan(info.position.y) :
             i = int(round(self.xpixel*(info.position.x + self.xsize/2 - info.point.x)/self.xsize))
@@ -445,7 +445,7 @@ class ColourImage(ImagePlane):
                     self.image[i,j,2] += r.intensity
 
         #          Retun info to calling object
-        return info 
+        return info
 
 
     def getPixelSourcePoint(self,i,j,plane):
@@ -462,7 +462,7 @@ class ColourImage(ImagePlane):
         """
         x = self.xsize*(i/self.xpixel - 0.5)
         y = self.ysize*(j/self.ypixel - 0.5)
-        
+
         return self.getSourcePoint(x,y,self.image[i,j,plane])
 
     def getRayPencil(self,ca,i,j,nrays = 5,wave = [True,True,True]):
@@ -479,7 +479,7 @@ class ColourImage(ImagePlane):
         :param wave: wavelength of rays (default = Default)
         :type wave: float
         :return: RayPencil with an added Beam.
-        
+
         Note will return None if the pixel intensity is 0.0
         """
 
@@ -500,7 +500,7 @@ class ColourImage(ImagePlane):
         """
         Method to get the image of OpticalPlane where the image localion is specifed
         by the supplied ImagePlane.
-        
+
         :param lens: the lens system
         :param ip: ImagePlane
         :param nrays: number of rays on radius
@@ -552,12 +552,12 @@ class ColourImage(ImagePlane):
 
         return im
 
-    
+
 
     def addTestGrid(self, xgap = 10, ygap = None, intensity = [1.0,1.0,1.0] ):
         """
          Method to add a test grid being a grid of one pixel wide in a grid pattern.
-        
+
         :param xgap: gap in x directions between pixels (defaults to 10)
         :type xgap: int
         :param ygap: gap in y directions between pixels, (defaults to xgap)
@@ -568,7 +568,7 @@ class ColourImage(ImagePlane):
         """
         if ygap == None:
             ygap = xgap
-        
+
         xw = xgap*(self.xpixel//xgap)
         yw = ygap*(self.ypixel//ygap)
 
@@ -591,13 +591,14 @@ class ColourImage(ImagePlane):
         plt.imshow(self.image,extent=(-self.xsize/2+self.point.x,self.xsize/2+self.point.x,-self.ysize/2+self.point.y,self.ysize/2+self.point.y))
 
 
-class CurvedOpticalImage(OpticalImage,SphericalSurface):
+class SphericalOpticalImage(SphericalImagePlane,OpticalImage):
     """
     Class to hold an curved image in a plane with a sampling grid. The actual
     image is held in a nmpy array
     """
-    
-    def __init__(self,pt = None,curve = 0.0, xsize = 200.0, ysize = 200.0, xpixel_or_im = 256, ypixel = 256):
+
+    def __init__(self,pt = None,curve = 0.0, xpixel = 256, ypixel = None,\
+                 xsize = 200.0, ysize = None):
         """
         Form the OpticalImage with either blank array of nmpy image array
         param pt the plane point (default = None,(0,0,0))
@@ -606,10 +607,10 @@ class CurvedOpticalImage(OpticalImage,SphericalSurface):
         param ysize the y size (default  = 200)
         param xpixel_or_im x-pixel size of image (default = 256) OR nmpy array of floats
         """
-        
 
-        OpticalImage.__init__(self,pt,xsize,ysize,xpixel_or_im,ypixel)
-        SphericalSurface.__init__(self,pt,curve,math.sqrt(0.25*(xsize*xsize + ysize*ysize)))
+
+        OpticalImage.__init__(self,pt,xpixel,ypixel,xsize,ysize)
+        SphericalImagePlane.__init__(self,pt,curve,math.sqrt(0.25*(xsize*xsize + ysize*ysize)))
 
 
     def __str__(self):
@@ -627,30 +628,6 @@ class CurvedOpticalImage(OpticalImage,SphericalSurface):
 
 
 
-    def getSource(self,i,j):
-        """
-        Get pixel as i,j as a SourcePoint
-        param i the x pixel location
-        param y the y pixel location
-        return SourcePoint giving x,y,z and intensity of pixel in global coordinates.
-        """
-        pt = self.getPoint()              # Reference point
-        x = self.xsize*(float(i)/self.xpixel - 0.5)
-        y = self.ysize*(float(j)/self.ypixel - 0.5)
-        rsqr = x*x + y*y
-        a = 1.0 - self.curvature*self.curvature*rsqr
-
-        
-        if a < 0.0 :
-            raise ValueError("CurvedOpticalImage.getSource: impossible surface: c: {0:8.5e} e: {1:8.5} r: {2:8.5e}"\
-                             .format(c,e,r))
-        else:
-            z =  c*r*r/(1.0 + math.sqrt(a))
-
-        pos = Vector3d(x + pt.x ,y + pt.y ,z + pt.z)
-        return ray.SourcePoint(pos,self.image[i,j])
-
-
     def getSurfaceInteraction(self,r):
         """
         Method to get back the surface interaction information for a ray
@@ -666,7 +643,7 @@ class CurvedOpticalImage(OpticalImage,SphericalSurface):
 
         info = SphericalSurface.getSurfaceInteraction(self,r)
 
-        
+
 
 
         #     Return list of information
@@ -676,7 +653,7 @@ class CurvedOpticalImage(OpticalImage,SphericalSurface):
 class KnifeTest(object):
     """
     Class to implement a knife edge test with methods to deconfigure the knife.
-    
+
     :param lens: the lens under test
     :type lens: OpticalGroup
     :param source: SourcePoint or the angle of the analysis
@@ -701,7 +678,7 @@ class KnifeTest(object):
             self.source = Unit3d(Angle(source))      # Infinite Object
         else:
             self.source = Unit3d(source)
-            
+
         self.setReference(refopt)
         self.wavelength = float(wave)
         if design == None:
@@ -714,9 +691,9 @@ class KnifeTest(object):
 
     def setKnife(self,knife = 0.0, angle = 0.0, shift = 0.0):
         """
-        Set or reset knife distance, angle and shift, same call as 
+        Set or reset knife distance, angle and shift, same call as
         KnifeAperture.setKnife
-        
+
         :param knife: distance from optical axis (Default = 0.0)
         :type knife: float
         :param angle: angle of knife (Default = 0.0)
@@ -732,27 +709,27 @@ class KnifeTest(object):
     def setWire(self,wire = True, thickness = 0.01):
         """
         Set into wire mode.
-        
+
         :param wire: set wire mode (Default = True)
         :type wire: boolean
         :param thickness: thickness of the wire (Default = 0.01 mm)
         :type thickness: float
-        
+
         """
         self.knife.setWire(wire,thickness)
         return self
-    
+
     def setReference(self,refopt = 0):
         """
         Set the reference option
-        
+
         """
         self.refopt = refopt
 
     def getImage(self, xpixel = 256, ypixel = None,nrays = 50):
         """
         Get the knife edge image
-        
+
         :param xpixel: xsize of image (Default = 256)
         :type xpixel: int
         :param ypixel: ysize of image (Deault = None ) same as xpixel
@@ -760,39 +737,39 @@ class KnifeTest(object):
         :param nrays: number or rays, (Default = 50)
         :param nrays: int
         :return: OpticalImage
-        
+
         """
 
         #      Make the raypencil
-        pencil = ray.RayPencil().addBeam(self.lens,self.source,"array",nrays,self.wavelength)  
+        pencil = ray.RayPencil().addBeam(self.lens,self.source,"array",nrays,self.wavelength)
         pencil *= self.lens    # Propagate through lens.
 
-        
+
         psf = self.lens.imagePoint(self.source,self.design)       # Paraxial point location
         if self.refopt == 1:
             psf = Psf().setWithRays(pencil,psf.z)             # Optimal positin in plane
         if self.refopt == 2:
             psf = Psf().optimalArea(pencil,psf.z)            # Make optimal PSF
-                   
+
         self.knife.setPoint(psf)                              # Set the position of the knife
 
         #          Set position of ouput plane, being one focal length beyond psf in direction from back nodal point
         fl = self.lens.backFocalLength(self.design)
-        bn = self.lens.backNodalPoint(self.design)          
-        u = Unit3d(psf - bn)                                  # Direction 
+        bn = self.lens.backNodalPoint(self.design)
+        u = Unit3d(psf - bn)                                  # Direction
         xsize = 3.0*self.lens.entranceAperture().maxRadius    # Size of output feild
-        output = OpticalImage(psf.propagate(fl,u),xpixel,ypixel,xsize,xsize) 
+        output = OpticalImage(psf.propagate(fl,u),xpixel,ypixel,xsize,xsize)
         pencil *= self.knife                                  # propagate through knife edge
         pencil *= output                                     # Then to output (will give shadow image)
 
         return output
-    
- 
+
+
 
 class SpotAnalysis(SpotDiagram):
     """
     Class to do an analysis of an image point as a SpotDiagram.
-    
+
     :param lens: The lens to be analysed
     :type lens: OpticalGroup or extending class
     :param source: source of rays, angle for collimated or SourcePoint for point (Default = 0.0)
@@ -801,7 +778,7 @@ class SpotAnalysis(SpotDiagram):
     :type refort: int
     :param wave: wavelength of analysis
     :type wave: float
-    :param design: wavelngth of design 
+    :param design: wavelngth of design
     :type design: float
     """
     def __init__(self, lens, source = 0.0, refopt = 0, wavelength=None, design = None):
@@ -816,28 +793,28 @@ class SpotAnalysis(SpotDiagram):
             self.source = Unit3d(Angle(source))      # Infinite Object
         else:
             self.source = Unit3d(source)
-            
+
         wave = getDefaultWavelength(wavelength)
         design = getDesignWavelength(design)
-            
+
         #    Make raypencil (this is used in draw())
         self.raypencil = ray.RayPencil().addBeam(lens,source,"array",wavelength = wave)
         self.raypencil *= lens       # Propagate through lens
-        
+
         self.pt = lens.imagePoint(source,design)
-    
+
         if refopt == 1:
             self.pt = Psf().setWithRays(self.raypencil,self.pt.z)              # Centre of PSF in image plane
         if refopt == 2:
             self.pt = Psf().optimalArea(self.raypencil,self.pt.z)              # Optimal area PSF, not in image plane
-        
 
 
-        
+
+
     def draw(self,delta = 0.0 ,drawpsf = True):
         """
         Draw the diagram
-        
+
         :param delta: displacement of plane from reference point (Default = 0.0)
         :type delta: float
         :param drawpsf: draw the geometric psf (Default = True)
@@ -846,9 +823,9 @@ class SpotAnalysis(SpotDiagram):
         #        Calcualte location of the plane
         self.plane = OpticalPlane(self.pt.z + delta)
         SpotDiagram.draw(self,self.plane,drawpsf)   # Use underlying draw
-        
-    
-        
-        
-        
-        
+
+
+
+
+
+

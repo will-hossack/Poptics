@@ -1,11 +1,12 @@
 """
    Set of classes to analyse geometric PSF and produce spot diagrams.
-   
+
 """
 from poptics.wavelength import WavelengthColour,getDefaultWavelength
 from poptics.surface import OpticalPlane
 from poptics.vector import Vector2d,Vector3d
-from matplotlib.pyplot import plot, scatter, axis
+from matplotlib.pyplot import plot, scatter, axis, figure, axes, xlabel
+from matplotlib.animation import FuncAnimation
 import math
 
 
@@ -15,8 +16,8 @@ ReferencePointOption = 0
 def getReferencePointOption():
     """
     Get the current global reference point, mainly used for Gui interfacwe
-    
-    :return: the 
+
+    :return: the
     """
     return ReferencePointOption
 
@@ -24,13 +25,13 @@ def getReferencePointOption():
 def setReferencePointOption(opt = 0):
     """
     Set the global Reference Point Option
-    
+
     :param opt: the reference point option. (0/1/2 only)
     :type opt: int
     """
     global ReferencePointOption
     ReferencePointOption = opt
-    
+
 
 PlaneShift = 0.0
 
@@ -38,31 +39,31 @@ def getPlaneShift():
     """
     Get the plane shift, mainly used buy GUI to moce the plane location on SpotDiagrams
 
-    :return: the current plane shift as a float    
+    :return: the current plane shift as a float
     """
     return PlaneShift
 
 def setPlaneShift(shift = 0.0):
     """
     Set the plane shift, mainly used by GUI
-    
+
     :param shift: the plane shift (Default = 0.0), which resets the shift
     :type shift: float
     """
     global PlaneShift
     PlaneShift = shift
-    
+
 def incrementPlaneShift(delta):
     """
     Increment the plane shift by Delta
-    
+
     :param delta: distance to increment the currennt plane shift
     :type delta: float
     """
     global PlaneShift
     PlaneShift += delta
-    
-    
+
+
 
 class Moments(object):
     """
@@ -78,8 +79,8 @@ class Moments(object):
         #self.moment = array.array('d',[0.0]*(self.__index(0,order) + 1))
         self.moment = array.array('d',[0.0]*(self.xdim*self.xdim))
         self.points = 0
-       
-    
+
+
     #
     def get(self,m,n):
         """
@@ -162,13 +163,13 @@ class FixedMoments(object):
         if pts != None:
             for p in pts:
                 self.addPoint(p)
-        
-       
-    
+
+
+
     def addPoint(self,p,value = 1.0):
         """
         Method to add a point to moments.
- 
+
         :param p: the point as Vector2d
         :type p: Vector2d
         :param value: value at the point (Default = 1.0)
@@ -183,7 +184,7 @@ class FixedMoments(object):
         self.m02 += value*p.y*p.y
         return self
 
-    
+
     def centroid(self):
         """
         Get the centriod of the moments as a Vector2d.
@@ -205,7 +206,7 @@ class FixedMoments(object):
         return math.sqrt(r)
 
     def ellipse(self):
-        """     
+        """
         Calcualte the best fitting ellipse as a list. This assume the
         disstibution is symmetric about the centriod.
 
@@ -218,7 +219,7 @@ class FixedMoments(object):
         u02 = self.m02/self.m00 - c.y*c.y
         u11 = self.m11/self.m00 - c.x*c.y
 
-        # Form the ellipse parameters 
+        # Form the ellipse parameters
         p = u20 + u02
         q = math.sqrt(4.0*u11*u11 + (u20 - u02)**2)
         major = math.sqrt(p + q)
@@ -230,11 +231,11 @@ class FixedMoments(object):
 
     def area(self):
         """
-        Cacualte the area (assuming it is an ellipse) 
+        Cacualte the area (assuming it is an ellipse)
 
         :return: the area as a float
 
-        """       
+        """
         major,minor,alpha = self.ellipse()
         return math.pi*major*minor
 
@@ -248,7 +249,7 @@ class FixedMoments(object):
         major,minor,alpha = self.ellipse()
         return math.sqrt(1.0 - (minor*minor)/(major*major))
 
-        
+
 
 class Psf(Vector3d):
     """
@@ -262,7 +263,7 @@ class Psf(Vector3d):
     :param major: major axis of ellipse (Default = 1.0)
     :type major: float
     :param minor: minor axis of ellipse (Default = None), major values used
-    :type minor: 
+    :type minor:
     :param alpha: angle of ellipse (Default = 0.0)
     :type alpha: float
     :param wave: the wavelength, Default = None (gives the package default)
@@ -272,8 +273,8 @@ class Psf(Vector3d):
     def __init__(self,pos = 0.0 , intensity = 1.0, major = 1.0, minor = None, alpha = 0.0, wavelength = None):
         """
         Constructor
-        """ 
-        
+        """
+
         if isinstance(pos,float):
             Vector3d.__init__(self,[0.0,0.0,pos])
         else:
@@ -286,7 +287,7 @@ class Psf(Vector3d):
             self.minor = minor
         self.alpha = alpha
         self.wavelength = getDefaultWavelength(wavelength)
-        
+
     def __str__(self):
         """
         Implement str
@@ -301,17 +302,17 @@ class Psf(Vector3d):
 
         :return: eccentricity of ellipse as a float.
         """
-        
+
         return math.sqrt(1.0 - (self.minor*self.minor)/(self.major*self.major))
 
     def area(self):
         """
         Area of PSF from elipse parameters.
-        
+
         :return: area as float
         """
         return math.pi*self.major*self.minor
-        
+
 
     def ellipse(self):
         """
@@ -321,18 +322,18 @@ class Psf(Vector3d):
         """
         return self.major,self.minor,self.alpha
 
-    
+
     def setWithRays(self,pencil,plane):
         """
         Set PSF from RayPencil in a specifed OpticalPlane, note this work
-        for curved planes, such as optics.surface.SphericalOpticalPlane 
+        for curved planes, such as optics.surface.SphericalOpticalPlane
         as well as the normal flat planes.
 
         :param pencil: The RayPencil (note only valid rays are considered)
         :type pencil: RayPencil
         :param plane: The OpticalPlane, of if float OpticalPlane as (0,0,plane)
         :type plane: OpticalPlane or float or None
-        
+
         This is th main used method to calcaute a psf in a plane.
         """
 
@@ -358,7 +359,7 @@ class Psf(Vector3d):
         """
         Method to find the optimal area PSF from a raypencil starting
         as the guess locaion plane.
-        
+
         This uses a simple itterative search bit provided that a reasonable guess is
         given for the inituial plane it converes quickly. The initial guess would normally
         be the paraxial image plane.
@@ -371,7 +372,7 @@ class Psf(Vector3d):
         """
         if isinstance(plane,float) or isinstance(plane,Vector3d):
             plane = OpticalPlane(plane)
-            
+
         #            set with initial condition tio local psf.
         psf = self.setWithRays(pencil,plane)
         area = psf.area()
@@ -381,7 +382,7 @@ class Psf(Vector3d):
 
         #            Loop looking for best
         while True:
-            pl = plane.incrementSurface(delta)   # Increment plane by delta 
+            pl = plane.incrementSurface(delta)   # Increment plane by delta
             self = Psf().setWithRays(pencil, pl) # Make new psf
             na = self.area()
             if na < area :             # Accept
@@ -398,11 +399,11 @@ class Psf(Vector3d):
                     delta *= 0.25      # Reduce delta
                     deltaReduced = True
         #
-        #        Found best PSF, in self, just return 
-                    
+        #        Found best PSF, in self, just return
+
         return self
-        
-    
+
+
     def draw(self,colour = "k"):
         """
         Draw the psf as an ellipse to the current plot axis.
@@ -410,7 +411,7 @@ class Psf(Vector3d):
         :param colour: The colour (Default = "k")
         :type colour: str or valid Color.
         """
-        
+
         n = 20
         dtheta = 2*math.pi/n
         xval = []
@@ -424,9 +425,9 @@ class Psf(Vector3d):
             xval.append(v.x)
             yval.append(v.y)
 
-   
-        plot(xval,yval,colour)
-        plot([self.x],[self.y],c=colour,marker='x')
+
+        plot(xval,yval,color = colour)
+        plot([self.x],[self.y],color = colour,marker='x')
 
 
 class SpotDiagram(object):
@@ -435,7 +436,7 @@ class SpotDiagram(object):
     class, use the .draw() method to render the diaagram in the required plane.
 
     :param pencil: the RayPencil
-    
+
     Note: the RayPencil is not changed
     """
 
@@ -445,9 +446,9 @@ class SpotDiagram(object):
         """
         self.raypencil = pencil       # Record the RayPencil
 
-        
+
     def draw(self,plane,drawpsf = True):
-        """ 
+        """
         Draw the spot disagram to the current active MatPlotLib as circles
         with the centre given my the wavelelength of the first ray.
 
@@ -462,7 +463,7 @@ class SpotDiagram(object):
 
         xData = []           # X and Y point locations
         yData = []
-        
+
         for r in self.raypencil:
             if r:
                 pt = r.pointInPlane(plane)     # Find the point in the plane
@@ -473,12 +474,68 @@ class SpotDiagram(object):
         col = WavelengthColour(self.raypencil[0].wavelength)
         #     Scatter plot to the current figure
         axis('equal')
-        scatter(xData,yData,c=col,marker='o')
+        scatter(xData,yData,color=col,marker='o')
         if drawpsf:                            # Make a psf if required and plot it
             psf = Psf().setWithRays(self.raypencil,plane)
             psf.draw()
 
 
+class SpotAnimation(SpotDiagram):
+    """
+        Class to animate a SpotDiagram
+    """
+    def __init__(self,pencil):
+        super(SpotAnimation,self).__init__(pencil)
 
-    
-    
+        #                        Set up plot and axis
+        self.fig = figure()
+        self.ax = axes()
+        self.ax.axis("equal")
+        self.ln, = self.ax.plot([],[])
+
+
+
+
+    def animate(self, i):
+        """
+        The main animate function to draw / redra the diagram
+        """
+
+
+
+        self.ax.figure.clear()     # Clear the current figure
+        self.draw(self.plane + self.startPlane,True)
+        self.ax.axis("equal")
+        xlabel("Plane : {0:6.3f}".format(self.plane))
+        self.ax.figure.canvas.draw() # Display new fugure
+
+        #      Update plane reversing if needed
+        if abs(self.plane) > self.zrange:
+            self.delta = -self.delta
+        self.plane += self.delta
+
+        #                       Return the plot
+        return self.ln,
+
+
+
+    def run(self, plane, zrange, delta = 0.1, frameinterval = 200):
+        """
+        The run method
+
+        :param plane: starting plane
+        :param zrange: range of animation
+        :param delta: shift between frames
+        :param interval: time interval in msecs
+        """
+        self.startPlane = plane
+        self.zrange = zrange
+        self.delta = delta
+        self.plane = 0.0
+
+        # Call the animation
+        anim = FuncAnimation(self.fig, self.animate,repeat = True, \
+                             interval = frameinterval, blit = True)
+
+
+

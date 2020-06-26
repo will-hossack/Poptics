@@ -22,6 +22,17 @@ image held in a two dimensional numpy array.
 .. autoclass:: poptics.analysis.OpticalImage
    :members:
 
+
+
+ColourImage Class
+=================
+
+Class to represent a ColourImage, having the same charcteristics
+as OpticicalImage but with each pixel being a [r,g,b] triplet.
+
+.. autoclass:: poptics.analysis.ColourImage
+   :members:
+
 SpotAnalysis Class
 ==================
 
