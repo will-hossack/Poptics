@@ -1360,7 +1360,7 @@ class Unit3d(Vector3d):
             return self.setInvalid()
 
         if len(args) == 1:       # 1 argument
-            fa = args[0]      # Deal with one arg of
+            fa = args[0]         # Deal with one arg of
 
             if isinstance(fa,(Unit3d,Vector3d,Angle)):
                 return self.set(fa)
@@ -1369,7 +1369,7 @@ class Unit3d(Vector3d):
                 if len(fa) ==  3:
                     return self.set(fa)          # x,y,z as list
                 elif len(fa) == 2:
-                    return self.set(Angle(fa))   # theta,psi as liost
+                    return self.set(Angle(fa))   # theta,psi as list
                 else:
                     return self.set(Angle(fa[0])) # theta only
 
@@ -1388,8 +1388,8 @@ class Unit3d(Vector3d):
 
             if isinstance(theta,str):               # If str convert degrees to radians
                 theta = math.radians(float(theta))
-                if isinstance(psi,str):
-                    psi = math.radians(float(psi))
+            if isinstance(psi,str):
+                psi = math.radians(float(psi))
             return self.set(Angle(theta,psi))         # Return required
         else:
 

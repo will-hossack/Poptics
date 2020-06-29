@@ -11,17 +11,36 @@ developed.
 from os import listdir
 import os.path as p
 from datetime import datetime
-from poptics.vector import Vector2d, Vector3d, Angle
+import math
+from poptics.vector import Vector2d, Vector3d, Unit3d, Angle
 import sys
+
+#                    Setup the logging
+import logging
+logger = logging.getLogger("Poptics")  # Glogal logger
+logger.handlers.clear()             # Clear any stray handlers (IPython issue)
+logger.setLevel(logging.INFO)
+fmt = logging.Formatter('%(levelname)s: %(message)s')
+ch = logging.StreamHandler()
+ch.setFormatter(fmt)                   # Set format
+ch.setLevel(logging.INFO)              # Set print level to INFO
+logger.addHandler(ch)                  # Add the handler
+
+
+def getLogger():
+    """
+    Function to get the message logger when used in other parts of package
+
+    :return: the packaage logger
+    """
+    return logger
+
 
 #               Internal globals
 __journalFile = None
-#__tioinput = sys.stdin
 __tiooutput = sys.stdout
 __tioerr = sys.stderr
 __tioesc = "%"
-#__tioenv = "$"       # Now handedl by os.path
-#__tiosepar = "/"
 __tiocomment = "#"
 
 
@@ -40,10 +59,10 @@ def getString(prompt, default=None):
     while True:
         val = __getInput(prompt, default)
         try:
-            s = str(val)                         # Force to be a string
-            return s.strip()                     # Strip off leading and trailing white space
+            s = str(val)          # Force to be a string
+            return s.strip()      # Strip off leading and trailing white space
         except:                                  # Catch everything
-            __tioerr.write("tio.getString.error: string conversion failed, try again\n")
+            logger.error("String conversion failed")
 
 
 def getFloat(prompt, default=None, min=None, max=None):
@@ -69,25 +88,25 @@ def getFloat(prompt, default=None, min=None, max=None):
     if max == None:
         max = float("Inf")
     while True:
-        val = __getInput(prompt,default)
-        try:                                             # Work out what happened
-            if isinstance(val,str):                      # If str eval what been given
+        val = __getInput(prompt, default)
+        try:                                     # Work out what happened
+            if isinstance(val, str):             # If str eval what been given
                 val = eval(val)
             fval = float(val)                            # force to float
             if fval >= min and fval <= max:              # test range
                 return fval
             else:
-                __tioerr.write("tio.getFloat.error: {0:6.3e} outside range {1:6.3e} to {2:6.3e}\n".\
-                format(fval,min,max))
-        except:
-           __tioerr.write("tio.getFloat.error: conversion of {0:s} failed\n".format(str(val)))
+                logger.error("Float {0:6.3e} outside range {1:6.3e} to {2:6.3e}"\
+                             .format(fval, min, max))
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Failed to evaluate float : '{0:s}'".format(str(val)))
 
 
-#
-def getInt(prompt,default = None ,min = None ,max = None):
+def getInt(prompt, default=None, min=None, max=None):
     """
     Read an int from the terminal with optional default and range checking.
-    The default is decimal but also binary (prefix 0b) , oct (prefix 0o) , hex prefix (0x) is also supported.
+    The default is decimal but also binary (prefix 0b) , oct (prefix 0o),
+    hex prefix (0x) is also supported.
 
     :param prompt: the prompt string to be displayed.
     :type prompt: str
@@ -106,29 +125,32 @@ def getInt(prompt,default = None ,min = None ,max = None):
     if max == None:
         max = sys.maxsize
     while True:
-        val = __getInput(prompt,default)                 # Get input
-        try:                                             # Work out what happened
-            if isinstance(val,str):                      # If str eval what been given
+        val = __getInput(prompt, default)             # Get input
+        try:                                          # Work out what happened
+            if isinstance(val, str):              # If str eval what been given
                 val = eval(val)
-            if isinstance(val,float):
-                if round(val) == val:                    # It is a int
-                    val = int(round(val))
-            if isinstance(val,int):                      # Check we have an int
-                if val >= min and val <= max:              # test range
+            #if isinstance(val,float):
+            #   if round(val) == val:                    # It is a int
+            #val = int(round(val))
+
+            if isinstance(val, int):                    # Check we have an int
+                if val >= min and val <= max:            # test range
                     return val
                 else:
-                    __tioerr.write("tio.getInt.error: {0:d} outside range {1:d} to {2:d}\n".\
-                                   format(val,min,max))
+                    logger.error("Int {0:d} outside range {1:d} to {2:d}".\
+                                 format(val, min, max))
             else:
-                __tioerr.write("tio.getInt.error: conversion of {0:s} not an integer.\n".format(str(val)))
-        except:
-            __tioerr.write("getInt.error: conversion of {0:s} failed\n".format(str(val)))
+                logger.error("Conversion of '{0:s}' to integer failed".format(str(val)))
+
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Conversion of '{0:s}' failed".format(str(val)))
 
 
-def getBool(prompt,default = None):
+def getBool(prompt, default=None):
     """
     Read a boolean from the terminal with checking.
-    It will accept: yes / no , true / false in lower or upper case,  1 / 0 or any logical expression.
+    It will accept: yes / no , true / false in lower or upper case,
+    1 / 0 or any logical expression.
 
     :param prompt: the prompt to be displayed.
     :type prompt: str
@@ -139,29 +161,28 @@ def getBool(prompt,default = None):
     Note: if response is a string it will be evaluated.
     """
     while True:
-        val = __getInput(prompt,default)
+        val = __getInput(prompt, default)
         try:
-            if isinstance(val,bool):
+            if isinstance(val, bool):
                 return val
-            if isinstance(val,str):                      # if str
+            if isinstance(val, str):                      # if str
                 bval = val.lower().strip()
                 if bval.startswith("yes") or bval.startswith("true"):
                     return True
                 if bval.startswith("no") or bval.startswith("false"):
                     return False
 
-            val = eval(val)                               # do eval to for expression
-            bval = bool(val)                              # Try and convert to bool
+            val = eval(val)                        # do eval to for expression
+            bval = bool(val)                       # Try and convert to bool
             return bval
         except:
-            __tioerr.write("tio.getBool.error: conversion of {0:s} failed\n".format(str(val)))
+            logger.error("Conversion of '{0:s}' to boolean failed".format(str(val)))
 
 
-
-def getComplex(prompt, default = None, maxabs = None):
+def getComplex(prompt, default=None, maxabs=None):
     """
-    Read a complex from the terminal with optional default and range checking of
-    the abs.
+    Read a complex from the terminal with optional default and range
+    checking of the abs.
 
     :param prompt: the prompt to be displayed.
     :type prompt: str
@@ -176,25 +197,25 @@ def getComplex(prompt, default = None, maxabs = None):
     if maxabs == None:
         maxabs = float("Inf")
     while True:
-        val = __getInput(prompt,default)                       # Get input
-        try:                                                   # Work out what happened
-            if isinstance(val,str):                            # If str eval what been given
+        val = __getInput(prompt, default)              # Get input
+        try:                                          # Work out what happened
+            if isinstance(val, str):              # If str eval what been given
                 val = eval(val)
-            if isinstance(val,list) or isinstance(val,tuple): # Convert from list or tuple if needed
-                cval = complex(val[0],val[1])
+            if isinstance(val, list) or isinstance(val, tuple): # Convert from list or tuple if needed
+                cval = complex(val[0], val[1])
             else:
-                cval = complex(val)                            # Convert to complex
+                cval = complex(val)              # Convert to complex
             if abs(cval) <= maxabs:              # test range
                 return cval
             else:
-                __tioerr.write("getComplex.error: abs {0:6.3e} outside range {1:6.3e}\n".\
-                      format(abs(cval),maxabs))
-        except:
-            __tioerr.write("getComplex.error: conversion of {0:s} failed\n".format(str(val)))
+                logger.error("Abs value of '{0:s}' greater than '{1:6.3e}'".\
+                             format(repr(cval), maxabs))
+
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Conversion of '{0:s}' to Complex failed.".format(str(val)))
 
 
-
-def getVector3d(prompt, default = None, maxabs = None):
+def getVector3d(prompt, default=None, maxabs=None):
     """
     Read a Vector3d from the terminal with checking.
 
@@ -214,9 +235,9 @@ def getVector3d(prompt, default = None, maxabs = None):
     if maxabs == None:
         maxabs = float("Inf")
     while True:
-        val = __getInput(prompt,default)
+        val = __getInput(prompt, default)
         try:
-            if isinstance(val,str):          # Its a string
+            if isinstance(val, str):          # Its a string
                 val = eval(val)              # Eval list
 
             vec = Vector3d(val)
@@ -224,13 +245,45 @@ def getVector3d(prompt, default = None, maxabs = None):
             if abs(vec) <= maxabs:
                 return vec                  #  Success
             else:
-                __tioerr.write("tio.getVector3d.error: abs {0:6.3e} outside range {1:6.3e}\n".\
-                               format(abs(vec),maxabs))
-        except:
-            __tioerr.write("tio.getVector3d.error: conversion of {0:s} failed\n".format(str(val)))
+                logger.error("Abs value of '{0:s}' greater than '{1:6.3e}'".\
+                             format(repr(vec), maxabs))
+        except (ValueError,NameError,ZeroDivisionError,SyntaxError):
+            logger.error("Conversion of '{0:s}' to Vector3d failed.".format(str(val)))
 
 
-def getAngle(prompt, default = None):
+def getUnit3d(prompt, default=None):
+    """
+    Read a Unit3d for the termial with checking. This will accapt and
+    directon in any format accepted by Unit3d().parseAngle()
+
+    Allowed formats
+
+    * x,y,z or [x,y,z]   three floats
+    * theta,psi or [theta,psi], in radians (quoted in "" for degrees)
+    * theta in radians (or quotes in "" for degrees)
+
+    :param prompt: the promp to be displayed
+    :type prompt: str
+    :param default: the default Unit3d
+    :type: Unit3d
+    """
+
+    while True:
+        val = __getInput(prompt, default)
+        try:
+            if isinstance(val, str):          # Its a string
+                val = eval(val)              # Eval list
+            tprint("Val is " + str(val))
+            if isinstance(val, (list,tuple)):
+                u = Unit3d().parseAngle(*val)
+            else:
+                u = Unit3d().parseAngle(val)
+            return u
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Conversion of '{0:s}' to Unit3d failed.".format(str(val)))
+
+
+def getAngle(prompt, default=None):
     """
     Read a Angle in theta/psi fromat  the terminal with checking.
 
@@ -246,16 +299,17 @@ def getAngle(prompt, default = None):
 
     """
     while True:
-        val = __getInput(prompt,default)
+        val = __getInput(prompt, default)
         try:
-            if isinstance(val,str):          # Its a string
+            if isinstance(val, str):          # Its a string
                 val = eval(val)              # Eval list
 
             return Angle(val)
-        except:
-            __tioerr.write("tio.getAngle.error: conversion of {0:s} failed\n".format(str(val)))
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Conversion of '{0:s}' to Angle failed.".format(str(val)))
 
-def getAngleDegrees(prompt, default = None):
+
+def getAngleDegrees(prompt, default=None):
     """
     Read a Angle in theta/psi from the terminal in Degrees with checking.
 
@@ -270,17 +324,17 @@ def getAngleDegrees(prompt, default = None):
     Note: input values are in degrees but the returned Angle values are in radians.
 
     """
-    if default != None and isinstance(default,Angle):    # Convert to degree for default
+    if default != None and isinstance(default, Angle):    # Convert to degree for default
         default = default.getDegrees()
     while True:
-        val = __getInput(prompt,default)
+        val = __getInput(prompt, default)
         try:
-            if isinstance(val,str):          # Its a string
+            if isinstance(val, str):          # Its a string
                 val = eval(val)              # Eval list
 
             return Angle().setDegrees(val)
-        except:
-            __tioerr.write("tio.getAngleDegrees.error: conversion of {0:s} failed\n".format(str(val)))
+        except (ValueError, NameError, ZeroDivisionError, SyntaxError):
+            logger.error("Conversion of '{0:s}' to Angle failed.".format(str(val)))
 
 
 
@@ -316,10 +370,11 @@ def getVector2d(prompt, default = None, maxabs = None):
             if abs(vec) <= maxabs:
                 return vec                  #  Success
             else:
-                __tioerr.write("tio.getVector2d.error: abs {0:6.3e} outside range {1:6.3e}\n".\
-                               format(abs(vec),maxabs))
-        except:
-            __tioerr.write("getVector2d.error: conversion of {0:s} failed\n".format(str(val)))
+                logger.error("Abs value of '{0:s}' greater than '{1:6.3e}'".\
+                             format(repr(vec),maxabs))
+        except (ValueError,NameError,ZeroDivisionError,SyntaxError):
+            logger.error("Conversion of '{0:s}' to Vector2d failed.".format(str(val)))
+
 
 
 
@@ -342,24 +397,6 @@ def getExpandedFilename(name):
     name = p.expandvars(name)
     return name
 
-
-    """    if name.startswith(__tioenv) or name.startswith("~") :
-        i = name.find(__tiosepar)               # Name seperator
-        if i < 0 :
-            i = len(name)                      # No seperator
-        postname = name[i:]                    # name after prefix, may be null
-        if name.startswith(__tioenv):          # Env name
-            envname = name[1:i]
-            prename = getenv(envname)
-            if prename == None :               # No name, try and send back what we can
-                return postname[1:]
-        else:
-            user = name[0:i]            # user supplied in ~username
-            prename = expanduser(user)  # try and expand it
-        return prename + postname       # Return processed name
-    else:
-        return name                     # No pre characters, just return name
-    """
 
 
 def getFilename(prompt, defaulttype = None, defaultname = None):
@@ -411,9 +448,10 @@ def openFile(prompt,key = "r",defaulttype = None, defaultname = None):
         try:
             filestream = open(filename,str(key))                  # try and open
             return filestream
-        except IOError:                                           # Error
-            __tioerr.write("openFile.error: failed to open {0:s} with key {1:s}\n".\
-                           format(filename,str(key)))
+        except IOError:
+            logger.error("Failed to open file '{0:s}' with key '{1:s}'".\
+                         format(filename,str(key)))
+
 
 def tprint(*args):
     """
@@ -433,11 +471,12 @@ def tprint(*args):
     for a in args:
         string += str(a)
 
+    logger.info(string)
     if not string.endswith("\n"):       # Add automatic newline if needed
         string += "\n"
 
-    __tiooutput.write(string)           # Write string and flush output buffer
-    __tiooutput.flush()
+    #__tiooutput.write(string)           # Write string and flush output buffer
+    #__tiooutput.flush()
 
     if __journalFile != None:           # Journal file open, so write string, but with prefix of "# "
         __journalFile.write(__tiocomment + " " + string)
@@ -496,9 +535,13 @@ def getOption(prompt,options,default = None):
 
             tprint("Options are : {0:s}".format(pl))
         elif opt == -1:                                     # Unknown option
-            __tioerr.write("tio.getOption.error: Invalid option {0:s}, help for list of options.\n".format(val))
+            logger.error("Invalid option '{0:s}' help for list of options".\
+                         format(str(val)))
+
         elif opt == -2:                                     # Non-unique option
-            __tioerr.write("tio.getOption.error: Non-unique option {0:s}, help for list of options.\n".format(val))
+            logger.error("Non-unique option '{0:s}' help for list of options".\
+                         format(str(val)))
+
 
 #
 #
@@ -539,19 +582,23 @@ def __getInput(prompt,default):
     p = __formatPrompt(prompt,default)
     #
     while True:
-        val = input(p)                 # Use the Python 3 "input" method
-        i = val.find(__tiocomment)     # is there a comment
-        if (i >= 0):                   # comment found
-            val = val[0:i]             # Kill comment
-        val = val.strip()              # kill white space
-        if val.startswith(__tioesc):   # process tio commands
-          __tiocommand(val)
-        elif len(val) > 0:
-            break                      # have something valid
-        else:
-            if default != None:
-                val = default          # Take default
-                break
+        try:
+            val = input(p)                 # Use the Python 3 "input" method
+            i = val.find(__tiocomment)     # is there a comment
+            if (i >= 0):                   # comment found
+                val = val[0:i]             # Kill comment
+            val = val.strip()              # kill white space
+            if val.startswith(__tioesc):   # process tio commands
+                __tiocommand(val)
+            elif len(val) > 0:
+                break                      # have something valid
+            else:
+                if default != None:
+                    val = default          # Take default
+                    break
+        except KeyboardInterrupt:
+            logger.info("Exit Requsted.")
+            sys.exit(0)
 
     if __journalFile != None:          # Journal to stream open
         __journalFile.write("{0:s}    # {1:s}\n".format(str(val),p))
@@ -606,6 +653,7 @@ def __tiocommand(cmd):
     if cmd.lower().startswith("beep"):   # Output a beep to the terminal
         __tiooutput.write("\a")
     elif cmd.startswith("exit"):         # Exit quitely
+        logger.info("Exit requested.")
         sys.exit(0)
     elif cmd.lower().startswith("journal"):   # Open a journal file
         tokens = cmd.split()

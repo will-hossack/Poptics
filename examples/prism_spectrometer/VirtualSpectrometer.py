@@ -17,8 +17,8 @@ def main():
     #      First set up prism
     n = MaterialIndex()                   # get materail, angle and height
     prismAngle = getFloat("Prism angle in degrees",60.0)
-    prismHeight =getFloat("Height of prism",100.0)
-    beam =getFloat("Beam Radius",10.0)
+    prismHeight =getFloat("Height of prism in mm",100.0)
+    beam =getFloat("Beam Radius in mm",10.0)
 
     #       Set up spectrometer
     prism = PrismSpectrometer(0.0,prismAngle,prismHeight,n,beam)

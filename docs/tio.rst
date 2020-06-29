@@ -13,6 +13,8 @@ wrong lens files or materials are specified.
 This module has been written and mainly tested on Linix and MacOs bit should work
 under Windows, but this has not been tested.
 
+Recent update to use Python logging methods for errors and information.
+
 Reading Basic Types
 ===================
 
@@ -40,6 +42,8 @@ classes used in the poptics package, again with prompt, defaults and error check
 .. autofunction:: poptics.tio.getVector2d
 
 .. autofunction:: poptics.tio.getVector3d
+
+.. autofunction:: poptics.tio.getUnit3d
 
 .. autofunction:: poptics.tio.getAngle
 
@@ -80,16 +84,12 @@ Print Function
 There is a simple print function that replaces to standard print(), this is independant of
 Python 2/3 problems and also journal to a file if this option is set.
 
+This now user the Pyton loggin at INFO level so that output can be looged using the standard
+logging handlers.
+
 .. autofunction:: poptics.tio.tprint
 
-Journal Function
-================
 
-There is a simple journal function that records all inputs  and outputs, inclduing what is printed by tprint()
-to a journal file. This is under development and at the moment only output, it is planned to allows
-this journal file to be reused as input.
-
-.. autofunction:: poptics.tio.setJournal
 
 Escape Commands
 ===============

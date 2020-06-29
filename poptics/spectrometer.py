@@ -9,7 +9,7 @@ from poptics.surface import FlatSurface
 from poptics.vector import Unit3d,Angle,Vector2d,Vector3d
 import math
 import numpy as np
-from poptics.tio import openFile,getExpandedFilename
+from poptics.tio import getFilename,getExpandedFilename,getLogger
 from matplotlib.pyplot import plot,xlabel,ylabel,title,grid
 from scipy.special import j1
 
@@ -478,19 +478,29 @@ class PrismSpectrometer(Prism):
 
         Liner starting with # are ignored as comments
         """
-        if fn == None:
-            sfile = openFile("Spectrometer file","r","spec")
-        else:
-            fn = getExpandedFilename(fn)   # Sort out logicals
+
+        while True:
+
+            if fn == None:
+                fn = getFilename("Spectrometer file","spec")
+            else:
+                fn = getExpandedFilename(fn)   # Sort out logicals
             if not fn.endswith("spec"):        # Append ".spec" if not given
-                fn += ".spec"
-            sfile= open(fn,"r")             # open file
+                 fn += ".spec"
+
+            try:
+                sfile= open(fn,"r")             # open file
+                lines = sfile.readlines()
+                sfile.close()
+                break
+            except FileNotFoundError:
+                getLogger().error("Failed to find spectrometer file : " + str(fn))
+                fn = None
+
 
         #          read file and process one line at a time
         #
 
-        lines = sfile.readlines()
-        sfile.close()
         #           Read through line at a time
         for line in lines:
 
@@ -522,7 +532,7 @@ class PrismSpectrometer(Prism):
                     self.setUpWavelength(float(token[1]))
 
                 else:
-                    print("Sprectometer: illegal key : {0:s}".format(token[0]))
+                    raise ValueError("Sprectometer: illegal key : {0:s}".format(token[0]))
 
         return self
 

@@ -10,7 +10,7 @@ from poptics.spectrometer import PrismSpectrometer
 
 def main():
 
-    spec = PrismSpectrometer().fromFile()
+    spec = PrismSpectrometer().fromFile("BK7")
     print(repr(spec))
     print("Waveleng is " + str(spec.wavelength))
 

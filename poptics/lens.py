@@ -7,7 +7,7 @@ from poptics.surface import OpticalPlane,ImagePlane,CircularAperture,IrisApertur
 from poptics.matrix import ParaxialPlane,ParaxialMatrix,DielectricMatrix,ParaxialGroup
 from poptics.vector import Vector3d
 from poptics.wavelength import getDesignWavelength,AirIndex,MaterialIndex,CauchyIndex,PhotopicPeak
-from poptics.analysis import CurvedOpticalImage
+from poptics.analysis import SphericalOpticalImage
 import poptics.tio as tio
 from matplotlib.pyplot import plot
 from os.path import join,splitext,isabs
@@ -1300,7 +1300,9 @@ class Eye(Lens):
         if pixels == 0:
             self.retina = SphericalImagePlane(self.bfp,-8.333e-2,4.0)
         else:
-            self.retina = CurvedOpticalImage(self.bfp,-8.333e-1, 4.0, 4.9, pixels, pixels)
+            print("Pixels are " + str(pixels))
+            self.retina = SphericalOpticalImage(self.bfp,-8.333e-1, \
+                                                pixels, pixels,6.0,6.0)
         self.add(self.retina)
 
 
@@ -1466,9 +1468,10 @@ class DataBaseLens(Lens):
                 lenslines = lensfile.readlines()
                 lensfile.close()
                 break
-            except IOError:                                           # Error
-                tio.tprint("Failed to open file : ",fn)
-                fn = None
+            except IOError:   # Error form messsm
+                tio.getLogger().error("Failed to open file : '{0:s}'".\
+                                      format(str(fn)))
+                fn = None      # clear name wich will caese reprompt
 
 
         #          Process the read file  one line at a time

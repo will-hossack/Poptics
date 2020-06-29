@@ -23,5 +23,9 @@ def main():
     m,direction = d.unitPair()
 
     t.tprint("Modulus is :",m," and direction : ",direction)
-main()
+    print("hello")
+
+
+if __name__ == "__main__" :
+    main()
 

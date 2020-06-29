@@ -14,6 +14,7 @@ def main():
     curve = 1.0/50
     sp = SphericalOpticalImage(100,curve,xsize = 12.0,ysize = 12.0)
     sp.addTestGrid(8,8)
+    print(repr(sp))
 
     radius = sp.maxRadius
     ydata = np.linspace(0.0,radius,10)

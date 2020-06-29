@@ -5,14 +5,14 @@ Author: Will Hossack: The University of Edinburgh
 """
 
 
-import tio as t
+import poptics.tio as t
 
 def main():
-    while True: 
+    while True:
         opts = "exit","quit","continue","restart","reset"
-        ans = t.getOption("Option",opts)
-        t.tprint("Option Number ",ans[0]," Option name ", ans[1])
-        if ans[0] == 0 or ans[0] == 1:
+        opt,name = t.getOption("Option",opts)
+        t.tprint("Option Number ",opt," Option name ", name)
+        if opt == 0 or opt == 1:
             break
 
 main()

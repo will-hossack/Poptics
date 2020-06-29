@@ -12,7 +12,7 @@ import poptics.ray as r
 from poptics.spectrometer import Prism
 from poptics.wavelength import MaterialIndex, Mercury_e, Mercury_i, Helium_r
 import matplotlib.pyplot as plt
-from poptics.vector import Angle
+from poptics.vector import Unit3d,Angle
 import math
 from poptics.tio import tprint
 import numpy as np
@@ -32,7 +32,7 @@ def main():
     tprint("Max resolutions is ",prism.maxResolution(Mercury_e))
     tprint("Resolution with 20 mm diameter beam : ", prism.resolution(10,Mercury_e))
 
-    u = Angle(dev/2)      # Set ray input angle at half min deviation
+    u = Unit3d().parseAngle(dev/2)      # Set ray input angle at half min deviation
 
     #      Form np array of wavelength and angle
     wavelengths = np.linspace(Mercury_i,Helium_r,50)

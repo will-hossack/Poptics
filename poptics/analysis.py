@@ -608,27 +608,22 @@ class SphericalOpticalImage(SphericalImagePlane,OpticalImage):
         param xpixel_or_im x-pixel size of image (default = 256) OR nmpy array of floats
         """
 
-
         OpticalImage.__init__(self,pt,xpixel,ypixel,xsize,ysize)
-        SphericalImagePlane.__init__(self,pt,curve,math.sqrt(0.25*(xsize*xsize + ysize*ysize)))
+        self.curvature = curve
+        self.maxRadius = 0.25*math.sqrt(xsize*xsize + ysize*ysize)
+        self.epsilon = 1.0
 
 
     def __str__(self):
         """
         Implement str()
         """
-        return "({0:s},{1:8.5f},{2:8.5f},{3:8.5f},{4:d},{5:d})".\
+        return "(p: {0:s} c: {1:8.5f} x: {2:8.5f} y:{3:8.5f} xpixel: {4:d} ypixel: {5:d})".\
             format(str(self.point),self.curvature,self.xsize,self.ysize,self.xpixel,self.ypixel)
 
-    def __repr__(self):
-        """
-        Implement repr()
-        """
-        return "analysis.CurvedOpticalImage" + str(self)
 
 
-
-    def getSurfaceInteraction(self,r):
+    #def getSurfaceInteraction(self,r):
         """
         Method to get back the surface interaction information for a ray
         Returns the list
@@ -641,13 +636,13 @@ class SphericalOpticalImage(SphericalImagePlane,OpticalImage):
         This also add the ray intensity to the cloeset pixel
         """
 
-        info = SphericalSurface.getSurfaceInteraction(self,r)
+     #   info = SphericalSurface.getSurfaceInteraction(self,r)
 
 
 
 
         #     Return list of information
-        return SurfaceInteraction(self.type,d,pos,u,self.refractiveindex)
+      #  return SurfaceInteraction(self.type,d,pos,u,self.refractiveindex)
 
 
 class KnifeTest(object):

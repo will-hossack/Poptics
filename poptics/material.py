@@ -105,7 +105,8 @@ class MaterialData(object):
 
                         return Material(key,formula,ragn,coef)  #   Success found material
 
-            return Material("NotValid",0,[0,0],[0])
+            #return Material("NotValid",0,[0,0],[0])
+            raise ValueError("MatertalData.getMaterial failed to find material '{0:s}'".format(key))
 
         except (OSError):
             raise SyntaxError("MaterialData.getMaterial: syntax error on line [{0:s}]".format(line))
