@@ -329,8 +329,8 @@ class WaveLength(object):
 
         return out_array
 
-    #
-    #
+
+
     def draw(self,colour='r', derivative = False):
         """
         Plot to the current Matplotlib axis.
@@ -836,7 +836,8 @@ class GradedIndex(RefractiveIndex):
 
 class Spectrum(WaveLength):
     """
-    Base Sepectrum class, implments a constant spectrum.
+    Base Sepectrum class, implments a constant spectrum with the option
+    to add and Optical Filter via the .addFilter() method
 
     :param bright: the intensity brightness (Default = 1.0)
     :type bright: float
@@ -847,15 +848,47 @@ class Spectrum(WaveLength):
     def __init__(self,bright = 1.0):
         """
         Set only brighnness
-        param bright, float, the brighness,(defaults to 1.0)
+
+        :param bright: the brighness,(defaults to 1.0)
+        :type bright: float
         """
         WaveLength.__init__(self)
         self.brightness = float(bright)
+        self.filter = None
 
     def __str__(self):
+        """
+        The str method
+        """
         return " b: {0:8.4f}".format(self.brightness)
 
-    #
+    def addFilter(self,filter = None):
+        """
+        Add and filter to the specrum, if this if this is None it
+        has the effect or rermoving the filter.
+
+        :param filter: The OpticialFilter (Default = None)
+        :type filter: OpticalFilter or None
+        """
+        self.filter = filter
+        return self
+
+    def getValue(self,wavelength = None):
+        """
+        Method to to get the current value taking into account a filter
+        if there is one.
+
+        :param wavelength: the wavelength (Default = None) gives Default
+        :type wavelength: float
+        """
+        #             Get the sprectum value
+        val = WaveLength.getValue(self,wavelength)
+        if self.filter == None:      # Check if there isd a filter
+            return val
+        else:                         # Yes, get filter transmission
+            f = self.filter.getValue(wavelength)
+            return f*val              # Weight by the filter transmission
+
     def __getNewValue__(self,wave):
         """
         Get the new value, always returns brighntess
@@ -947,9 +980,6 @@ class PlanckSpectrum(Spectrum):
         return val*self.e
 
 
-
-#            PhotopicSpectrum
-#
 class PhotopicSpectrum(GaussianSpectrum):
     """
     The Phototic (high light level) normal spectral response of the eye.
@@ -974,7 +1004,7 @@ class PhotopicSpectrum(GaussianSpectrum):
         """
         return "b: {0:7.4f}".format(self.brightness)
 
-#
+
 class ScotopicSpectrum(GaussianSpectrum):
     """
     The Scotopic (dark adapted) specral response of the eye
@@ -990,17 +1020,14 @@ class ScotopicSpectrum(GaussianSpectrum):
         GaussianSpectrum.__init__(self,ScotopicPeak,ScotopicWidth,bright)
         self.title = "Scotopic Spectrum"
 
-    #
-    #        The __str__ method
-    #
+
     def __str__(self):
         """
         The str() function
         """
         return "b: {0:7.4f}".format(self.brightness)
 
-#             Tricolour spectrum
-#
+
 class TriColourSpectrum(Spectrum):
     """
     Implement a three coloured spectrum (RGB), all with same width
@@ -1046,6 +1073,149 @@ class TriColourSpectrum(Spectrum):
         d = wave - Blue
         value += self.brightness*self.blue*math.exp(-(d*d)/(self.width*self.width))
         return value
+
+
+class OpticalFilter(WaveLength):
+    """
+    Class to represent a wavelength filter
+
+    :param transmission: overall transmission
+    :type transmission: float
+    """
+    def __init__(self,transmission = 1.0):
+        WaveLength.__init__(self)
+        self.transmission = transmission
+
+
+
+class LongPassFilter(OpticalFilter):
+    """ Class to represent a long pass filter
+
+    :param cutoff: the cut-off wavelength
+    :param width: the width of the cut off region to 10% value
+    :param transmission: the transmission at long wavelength
+    """
+    def __init__(self,cutoff,width,transmission = 1.0):
+        OpticalFilter.__init__(self,transmission)
+        self.cutoff = cutoff
+        self.alpha = math.tan(0.4*math.pi)/(0.5*width)
+
+    def __getNewValue__(self,wavelength):
+        """
+        Get the new value
+        """
+        dw = wavelength - self.cutoff
+        return self.transmission*(math.atan(self.alpha*dw) + math.pi/2)/math.pi
+
+
+class ShortPassFilter(OpticalFilter):
+     """ Class to represent a short pass filter.
+
+     :param cutoff: the cut-off wavelength
+     :param width: the width of the cut off region to 10% value
+     :param transmission: the transmission at long wavelength
+     """
+
+     def __init__(self,cutoff,width,transmission = 1.0):
+        OpticalFilter.__init__(self,transmission)
+        self.cutoff = cutoff
+        self.alpha = math.tan(0.4*math.pi)/(0.5*width)
+
+     def __getNewValue__(self,wavelength):
+        """
+        Get the new value
+        """
+        dw = self.cutoff - wavelength
+        return self.transmission*(math.atan(self.alpha*dw) + math.pi/2)/math.pi
+
+class BandPassFilter(OpticalFilter):
+     """ Class to represent a band pass filter.
+
+     :param lowcutoff: the low cut-off wavelength
+     :param highcutoff: the highcutoff
+     :param width: the width of the cut off region to 10% value
+     :param transmission: the transmission at long wavelength
+     """
+
+     def __init__(self,shortcutoff,longcutoff,width,transmission = 1.0):
+        OpticalFilter.__init__(self,transmission)
+        self.shortcutoff = shortcutoff
+        self.longcutoff = longcutoff
+        self.alpha = math.tan(0.4*math.pi)/(0.5*width)
+
+     def __getNewValue__(self,wavelength):
+        """
+        Get the new value
+        """
+        ws = self.shortcutoff - wavelength
+        wl = wavelength - self.longcutoff
+        return self.transmission*\
+            (math.atan(self.alpha*ws) + math.pi/2)*\
+            (math.atan(self.alpha*wl) + math.pi/2)/math.pi**2
+
+
+
+
+
+class FilterStack(list):
+    """
+    Class to give a filter stack
+    """
+
+    def __init__(self,*args):
+        list.__init__(self)
+        for f in args:
+            self.append(f)
+
+    def getValue(self,wavelength = None):
+        """
+        Method to get the strandmission of the filter stack
+
+        :param wavelength: the wavelength (Default = None) for current default
+        :type wavelength: float
+        """
+        trans = 1.0
+        for f in self:
+            trans *= f.getValue(wavelength)
+
+        return trans
+
+    def getArrayValues(self,wave_array):
+        """
+        Get an array of values for a NumPy array
+
+        :param wave_array: a Numpy array of wavelengths in microms
+        :type wave_array: np.array
+        :return: values as a Numpy.array
+
+        """
+        out_array = np.empty(wave_array.size)
+        for i,wave in enumerate(wave_array):
+            out_array[i] = self.getValue(wave)
+
+        return out_array
+
+    def draw(self,colour='r'):
+        """
+        Plot to the current Matplotlib axis.
+
+        - self.minWavelenth (Default 0.35) taken from self[0]
+        - self.maxWavelength (Default 0.65) taken from self[0]
+
+        :param colour: colour passed to matplotlib (defaults to 'r')
+        :type colour: Color or str
+        :return: None
+
+
+        """
+        x = np.linspace(self[0].minWavelength,self[0].maxWavelength,self[0].plotPoints)
+        y = self.getArrayValues(x)
+        plot(x,y,c=colour)
+
+        xlim([self[0].minWavelength,self[0].maxWavelength])
+        xlabel("Wavelength in microns")
+        grid()
+
 
 
 def WavelengthColour(wave):

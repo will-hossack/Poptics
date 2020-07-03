@@ -5,9 +5,8 @@ Author: Will Hossack, The University of Edinburgh
 """
 from poptics.lens import DataBaseLens
 from poptics.ray import RayPencil,RayPath
-from poptics.tio import tprint,getFloat
+from poptics.tio import tprint,getUnit3d
 import matplotlib.pyplot as plt
-import math
 
 
 def main():
@@ -19,8 +18,8 @@ def main():
     lens.setIris(0.7)           # Set iris to 0.7 of max
     #
     #       Make collimated pencil and add ray monitor to each ray
-    angle = getFloat("Angle",2.0)
-    pencil = RayPencil().addBeam(lens,math.radians(angle),"vl").addMonitor(RayPath())
+    u = getUnit3d("Direction",0.0)
+    pencil = RayPencil().addBeam(lens,u,"vl").addMonitor(RayPath())
     #
     tprint("Focal length is : ",lens.backFocalLength())
     tprint("Petzal sum is : ",lens.petzvalSum())

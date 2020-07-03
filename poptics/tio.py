@@ -273,11 +273,7 @@ def getUnit3d(prompt, default=None):
         try:
             if isinstance(val, str):          # Its a string
                 val = eval(val)              # Eval list
-            tprint("Val is " + str(val))
-            if isinstance(val, (list,tuple)):
-                u = Unit3d().parseAngle(*val)
-            else:
-                u = Unit3d().parseAngle(val)
+            u = Unit3d().parseAngle(val)
             return u
         except (ValueError, NameError, ZeroDivisionError, SyntaxError):
             logger.error("Conversion of '{0:s}' to Unit3d failed.".format(str(val)))

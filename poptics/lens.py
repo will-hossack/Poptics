@@ -128,9 +128,9 @@ class OpticalGroup(list):
         """
         return self.point
 
-    def movePoint(self,delta):
+    def incrementPoint(self,delta):
         """
-        Move the reference point by about delta
+        Incremnet the reference point by about delta
 
         :param delta: distance moved
         :type delta: Vector3d or float
@@ -1315,7 +1315,7 @@ class Eye(Lens):
         return self.retina
 
 
-    def incrementRetina(self,delta = 0.0):
+    def moveRetina(self,delta = 0.0):
         """
         Method to displace the retina a specified distance from it
         defaults (focused) position.
@@ -1646,14 +1646,14 @@ class OpticalSystem(Lens):
         self[group].setPoint(pt)
         return self
 
-    def movePoint(self,delta,group):
+    def incrementPoint(self,delta,group):
         """
-        Move the reference point by about delta
+        Increment the reference point of a specifed group.
 
         :param delta: distance moved
         :type delta: Vector3d or float
         """
-        self[group].movePoint(delta)
+        self[group].incrementPoint(delta)
         return self
 
 

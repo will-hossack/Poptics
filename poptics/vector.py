@@ -1369,9 +1369,17 @@ class Unit3d(Vector3d):
                 if len(fa) ==  3:
                     return self.set(fa)          # x,y,z as list
                 elif len(fa) == 2:
-                    return self.set(Angle(fa))   # theta,psi as list
+                    theta,psi = fa
+                    if isinstance(theta, str):
+                        theta = math.radians(float(theta))
+                    if isinstance(psi, str):
+                        psi = math.radians(float(psi))
+                    return self.set(Angle(theta,psi))   # theta,psi as list
                 else:
-                    return self.set(Angle(fa[0])) # theta only
+                    theta = fa[0]
+                    if isinstance(theta,str):
+                        theta = math.radians(float(theta))
+                    return self.set(Angle(theta)) # theta only
 
             elif isinstance(fa,(float,int)):
                 return self.set(Angle(fa))

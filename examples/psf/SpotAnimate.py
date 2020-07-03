@@ -5,11 +5,10 @@
 """
 
 from poptics.lens import DataBaseLens
-from poptics.psf import Psf,SpotAnimation
-from poptics.vector import Unit3d,Angle
+from poptics.psf import SpotAnimation
 from poptics.ray import RayPencil
 from poptics.wavelength import Default
-from poptics.tio import getFloat
+from poptics.tio import getUnit3d,getFloat
 
 import matplotlib.pyplot as plt
 
@@ -21,26 +20,18 @@ def main():
     lens = DataBaseLens()
 
     #           Get angle of beam and wavelnegth
-    angle = getFloat("Angle in degrees",0.0,0.0,15.0)
-    u = Unit3d(Angle().setDegrees(angle))     # Angle as unit vectr
+    u = getUnit3d("Direction",0.0)
     w = getFloat("Wavelength",Default)
 
-    #    Make two ray pencils, one for spot diagram and one for display (vertical only)
+    #    Make a ray through lens
     pencil = RayPencil().addBeam(lens,u,"array",wavelength=w)
+    pencil *= lens       # Propagate through lens
 
-    bf = lens.backFocalPlane()
-
-    #            Propagate through lens to back focal plane
-    pencil *= lens
-    pencil *= bf
-
-    #            Get optimal area psf and create a SpotDiagram
-    psf = Psf().optimalArea(pencil,bf)
     sd = SpotAnimation(pencil)
 
     #             Go round loop plotting the sopt diagram as various zplane positions
-
-    sd.run(psf.z,1.0,0.1,400)
+    bf = lens.backFocalPlane()     # Back focal plane
+    sd.run(bf)          #1.0,0.1,400)
     #plt.show()
 
 

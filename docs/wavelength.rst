@@ -212,10 +212,56 @@ Class to implement a three colour spectrum with peaks as Red, Green and Blue. Al
 PlanckSpectrum Class
 =====================
 
-Class to implemnt the Plank temperture dependand specturm.
+Class to implement the Plank temperture dependand specturm.
 
 .. autoclass:: poptics.wavelength.PlanckSpectrum
    :members:
+
+OpticalFilter Class
+===================
+
+As class to implement a wavelength dependent filter that can be added to any Spectrum. The main class just
+defines overall transmission; this is used via the extending classes.
+
+.. autoclass:: poptics.wavelength.OpticalFilter
+	       :members:
+
+LongPassFilter Class
+====================
+
+Implment a long pass filter, to passes wavelength longer that the specified cutoff. The width is 10-90% transmission
+width and the transistion is modelled by a arctan.
+
+.. autoclass:: poptics.wavelength.LongPassFilter
+	       :members:
+
+
+ShortPassFilter Class
+=====================
+
+Implment a short pass filter, to passes wavelength shorter that the specified cutoff.
+The width is 10-90% transmission
+width and the transistion is modelled by a arctan.
+
+.. autoclass:: poptics.wavelength.ShortPassFilter
+	       :members:
+
+BandPassFilter Class
+====================
+
+Implement a band pass filter with short and long cutoff wavelnegth. The with is 10-90% and is the
+same for short and long cutoffs. The sharp is modelled by a arctan.
+
+.. autoclass:: poptics.wavelength.BandPassFilter
+	       :members:
+
+FilterStack Class
+=================
+
+Class to implement a stack of filters.
+
+.. autoclass:: poptics.wavelength.FilterStack
+	       :members:
 
 
 Colour Support Functions

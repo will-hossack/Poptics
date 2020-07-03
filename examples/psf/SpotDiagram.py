@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    #      Get lens from database 
-    lens = DataBaseLens()       
-    
-    #           Get angle of beam and wavelnegth 
+    #      Get lens from database
+    lens = DataBaseLens()
+
+    #           Get angle of beam and wavelnegth
     angle = getFloat("Angle in degrees",0.0,0.0,15.0)
     u = Unit3d(Angle().setDegrees(angle))     # Angle as unit vectr
     w = getFloat("Wavelength",Default)
@@ -30,18 +30,17 @@ def main():
 
     #            Propagate through lens to back focal plane
     pencil *= lens
-    pencil *= bf
+
     vpencil *=lens
     vpencil *=bf
 
-    #            Get optimal area psf and create a SpotDiagram 
-    psf = Psf().optimalArea(pencil,bf)
+    #            Get optimal area psf and create a SpotDiagram
     sd = SpotDiagram(pencil)
 
     #             Go round loop plotting the sopt diagram as various zplane positions
 
     while True:
-        zp = getFloat("Zplane",psf.z)
+        zp = getFloat("Zplane",bf.getPoint().z)
         plane = OpticalPlane(zp)
         plt.subplot(2,1,1)
         lens.draw()
@@ -53,6 +52,6 @@ def main():
         sd.draw(plane,True)
         plt.title("Spot diagram")
         plt.show(block = True)
-    
+
 
 main()

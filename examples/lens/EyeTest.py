@@ -17,7 +17,7 @@ def main():
     eye = Eye(0.0)
     print("Original Focalength : " + str(eye.backFocalLength(wl.PhotopicPeak)))
     #eye.setIris(0.5)
-    #eye.incrementRetina(-1.0)
+    eye.moveRetina(1.0)
 
     #eye.setNearPoint(300)
     #print("Modified Focalength : " + str(eye.backFocalLength(wl.PhotopicPeak)))

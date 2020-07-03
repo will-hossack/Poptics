@@ -34,7 +34,7 @@ def main():
     v = getVector3d("Vector",maxabs = 100)
     tprint(repr(v))
     """
-    u = getUnit3d("Direction",0.0)
+    u = getUnit3d("Direction","10")
     tprint(repr(u))
 
 

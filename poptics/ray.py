@@ -8,7 +8,9 @@ from poptics.matrix import ParaxialMatrix,ParaxialGroup,ParaxialPlane
 from matplotlib.pyplot import plot
 from numpy import linspace
 
-
+Clear = 0             #: Defeine a clear surface.
+Refracting = 1        #: Define a refracting surface.
+Reflecting = 2        #: Define a reflecting surface,
 
 #   Global Current Angle (mainly used by GUI)
 CurrentAngle = Unit3d(0.0,0.0,1.0)
@@ -31,8 +33,6 @@ def setCurrentAngle(u):
 
     """
     global CurrentAngle
-    if isinstance(u,float):
-        u = Angle(u)
     CurrentAngle = Unit3d(u)
 
 def getCurrentSourcePoint(self):
@@ -64,8 +64,8 @@ class SourcePoint(Vector3d):
         """
         Create a 3d source point
         """
-        if isinstance(pos,float) or isinstance(pos,int):
-            Vector3d.__init__(self,[0,0,pos])
+        if isinstance(pos,(float,int)):
+            Vector3d.__init__(self,0,0,pos)
         else:
             Vector3d.__init__(self,pos)
         if isinstance(s,Spectrum):         # Add spectrum if given
@@ -80,19 +80,12 @@ class SourcePoint(Vector3d):
         """
         return Vector3d.__str__(self) + " s: " + str(self.spectrum)
 
-    def __repr__(self):
-        """
-        Implment repr()
-        """
-        return "{0:s}".format(__class__.__name__) + str(self)
-
 
     def copy(self):
         """
         Make a copy of the SourcePoint
 
         :return: copy of current `SourcePoint`
-
         """
         return SourcePoint(self,self.spectrum)
 
@@ -100,10 +93,11 @@ class SourcePoint(Vector3d):
     def getIntensity(self,wavelength = None):
         """
         Get the intensity as specified wavelength
-        """
-        if wavelength == None:
-            wavelength = getDefaultWavelength()
 
+        :param wavelength: the wavelengh, (default to current default)
+        :type wavelength: float or None
+        """
+        wavelength = getDefaultWavelength(wavelength)
         return self.spectrum.getValue(wavelength)
 
 
@@ -145,6 +139,7 @@ class Disc(object):
     def getPoint(self):
         """
         Method to get the reference point
+
         :return: the reefrence point as Vector3d
         """
         return self.point
@@ -219,7 +214,13 @@ class Ray(object):
         """
         Method to set Ray as inValid, need to be defined in extending classes.
         """
-        print("Ray.selInvalid needs to be defines")
+        raise NotImplementedError("Ray.selInvalid needs to be defines")
+
+    def copy(self):
+        """
+        Make a deep copy, needs to be defined by extening class
+        """
+        raise NotImplementedError("Ray.selInvalid needs to be defines")
 
 
     def getIntensity(self):
@@ -270,7 +271,7 @@ class Ray(object):
         Also impletents __bool__
 
         """
-        print("Ray.isValid needs to be defined")
+        raise NotImplementedError("Ray.isValid() not defined")
 
 
     def __bool__(self):
@@ -606,7 +607,7 @@ class IntensityRay(Ray):
 
     """
 
-    def __init__(self, pos = 0.0, dirn = 0.0 , wavelength = None, intensity = 1.0, index = AirIndex()):
+    def __init__(self, pos, dirn  , wavelength = None, intensity = 1.0, index = AirIndex()):
         """
         Constructor for to set parameters
 
@@ -619,16 +620,9 @@ class IntensityRay(Ray):
             if isinstance(pos,SourcePoint):
                 intensity = pos.spectrum
             Ray.__init__(self,wavelength,intensity,index)     # Set wavelnegth intensity and index in super
-            if isinstance(pos,(float,int)):
-                self.position = Vector3d(0,0,pos)
-            else:
-                self.position = Vector3d(pos)                  # Make localcopy of Position and Director (since they get updated)
-
-            self.director = Unit3d().parseAngle(dirn)
+            self.position = Vector3d(pos) # Make localcopy of Position and Director (since they get updated)
+            self.director = Unit3d(dirn)
         self.pathlength = None                             # Set opl to none (not calculated)
-
-
-
 
     def __str__(self):
         """
@@ -652,9 +646,9 @@ class IntensityRay(Ray):
 
     def setInvalid(self):
         """
-        Method to set the ray to inValid (sets the Unit3d as invalid)
+        Method to set the ray to inValid (sets the ray direction as invalid)
 
-        :rerturn: self
+        :return: self
 
         """
         self.director.setInvalid()       # Set director to be invalid
@@ -696,7 +690,7 @@ class IntensityRay(Ray):
 
     def rotateAboutX(self,angle,origin = None):
         """
-        Roate the ray by specified andgle and Origin. If origin is None, then
+        Roate the ray by specified andgle about x-axis and Origin. If origin is None, then
         (0,0,0) is assumes
 
         :param angle: rotation angle in radians
@@ -715,6 +709,55 @@ class IntensityRay(Ray):
             if origin != None:
                 self.position += origin         # Put origin back in
             self.director.rotateAboutX(angle)   # Rotate director
+            self.updateMonitor()                # Updated the monitor
+        return self
+
+
+    def rotateAboutY(self,angle,origin = None):
+        """
+        Roate the ray by specified andgle about y-axis and Origin. If origin is None, then
+        (0,0,0) is assumes
+
+        :param angle: rotation angle in radians
+        :type angle: float
+        :param origin: Rotation origin (Default = None)
+        :type origin: Vector3d or None
+        """
+
+        #            Deal with position
+
+        if self:             # Cleck the ray is valid
+
+            if origin != None:
+                self.position -= origin         # Move to orgin is givem
+            self.position.rotateAboutY(angle)   # Rotate position
+            if origin != None:
+                self.position += origin         # Put origin back in
+            self.director.rotateAboutY(angle)   # Rotate director
+            self.updateMonitor()                # Updated the monitor
+        return self
+
+    def rotateAboutZ(self,angle,origin = None):
+        """
+        Roate the ray by specified angle about zaxis and Origin. If origin is None, then
+        (0,0,0) is assumes
+
+        :param angle: rotation angle in radians
+        :type angle: float
+        :param origin: Rotation origin (Default = None)
+        :type origin: Vector3d or None
+        """
+
+        #            Deal with position
+
+        if self:             # Cleck the ray is valid
+
+            if origin != None:
+                self.position -= origin         # Move to orgin is givem
+            self.position.rotateAboutZ(angle)   # Rotate position
+            if origin != None:
+                self.position += origin         # Put origin back in
+            self.director.rotateAboutZ(angle)   # Rotate director
             self.updateMonitor()                # Updated the monitor
         return self
 
@@ -739,7 +782,7 @@ class IntensityRay(Ray):
             if self.pathlength != None:
                 self.pathlength += distance*self.refractiveindex.getValue(self.wavelength)
 
-            self.updateMonitor()            # Uupdated the monitor
+            self.updateMonitor()            # Update the monitor
 
 
         return self
@@ -776,7 +819,8 @@ class IntensityRay(Ray):
         #
         info = surface.getSurfaceInteraction(self)
         if math.isnan(info.distance):           # Distance failed
-            return False                  # Exit now
+            self.setInvalid()                   # Set ray as invalid
+            return False                        # Exit now
 
         self.position = info.position       # Update ray position
         self.updateMonitor()                # Update the monitor
@@ -792,10 +836,10 @@ class IntensityRay(Ray):
 
         #          Deal with different surface types
         #
-        if info.type == 0 :                            # Clear surface (do nothing)
+        if info.type == Clear :                          # Clear surface (do nothing)
             return True
 
-        elif info.type == 1:                                      # Refratcion
+        elif info.type == Refracting:                              # Refraction
             nl = self.refractiveindex.getValue(self)              # Current refractive index
             nr = info.refractiveindex.getValue(self)              # Refractive index after surface
             ratio = nr/nl
@@ -807,7 +851,7 @@ class IntensityRay(Ray):
                 self.setInvalid()                                 # Above critical, set invalid
                 return False
 
-        elif info.type == 2:                                      # Reflection
+        elif info.type == Reflecting:                                      # Reflection
             return self.director.reflection(info.normal)          # Do reflection
 
         else:
@@ -818,20 +862,18 @@ class IntensityRay(Ray):
 
     def pointInPlane(self,plane):
         """
-        Method to calcualte where the ray will striked a specified optical plane
+        Method to calcualte where the ray will striked a specified optical surface
         This does NOT alter the current ray.
 
-        :param plane: the OpticalPlane or z the location on the optical axis.
+
+        :param plane: the OpticalPlane.
         :type plane: :class:`optics.surface.OpticalPlane` or float
         :return: :class:`vector.Vector2d`, the point in the plane relative to the plane reference point.
         """
-        if isinstance(plane,float) or isinstance(plane,int):
-            pt = Vector3d(0.0,0.0,plane)
-        else:
-            pt = plane.getPoint()
+
+        pt = plane.getPoint()
         if self:
             d = plane.getDistance(self.position,self.director)
-            #(pt.z - self.position.z)/self.director.z
             return Vector2d(self.position.x + d*self.director.x - pt.x,\
                             self.position.y + d*self.director.y - pt.y)
         else:

@@ -4,19 +4,17 @@ Program to explore stop diagrams on the back of the retina in the Eye class
 """
 from poptics.lens import Eye
 from poptics.ray import RayPencil,RayPath
-from poptics.tio import getFloat,tprint
-from poptics.vector import Unit3d
+from poptics.tio import getFloat,tprint,getUnit3d
 from poptics.psf import Psf,SpotDiagram
 import matplotlib.pyplot as plt
-import math
 
 def main():
 
         lens = Eye()
         iris = getFloat("Iris",1.0)
         lens.setIris(iris)
-        angle = getFloat("Angle in degrees",5.0)
-        u = Unit3d().parseAngle(math.radians(angle))
+
+        u = getUnit3d("Direction",0.0)
 
         vpencil = RayPencil().addBeam(lens,u,key="vl").addMonitor(RayPath())
         spencil = RayPencil().addBeam(lens,u,key="array")

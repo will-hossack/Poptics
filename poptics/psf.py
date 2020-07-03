@@ -5,7 +5,7 @@
 from poptics.wavelength import WavelengthColour,getDefaultWavelength
 from poptics.surface import OpticalPlane
 from poptics.vector import Vector2d,Vector3d
-from matplotlib.pyplot import plot, scatter, axis, figure, axes, xlabel
+from matplotlib.pyplot import plot, scatter, axis, figure, axes, xlabel,title
 from matplotlib.animation import FuncAnimation
 import math
 
@@ -337,7 +337,7 @@ class Psf(Vector3d):
         This is th main used method to calcaute a psf in a plane.
         """
 
-        if isinstance(plane,float) or isinstance(plane,Vector3d):
+        if isinstance(plane,(float,int)) or isinstance(plane,Vector3d):
             plane = OpticalPlane(plane)
         #          Form the moments
 
@@ -436,6 +436,7 @@ class SpotDiagram(object):
     class, use the .draw() method to render the diaagram in the required plane.
 
     :param pencil: the RayPencil
+    :type pencil: RayPencil
 
     Note: the RayPencil is not changed
     """
@@ -482,7 +483,11 @@ class SpotDiagram(object):
 
 class SpotAnimation(SpotDiagram):
     """
-        Class to animate a SpotDiagram
+        Class to animate a SpotDiagram. The constrcuor just set up the system
+        and the actual animation is performed by the .run() method
+
+        :param pencil: the RayPencil of rays.
+        :type pencil: RayPencil
     """
     def __init__(self,pencil):
         super(SpotAnimation,self).__init__(pencil)
@@ -496,45 +501,53 @@ class SpotAnimation(SpotDiagram):
 
 
 
-    def animate(self, i):
+    def __animate__(self, i):
         """
-        The main animate function to draw / redra the diagram
+        The main animate function to draw / redraw the diagram
+
+        Set private, not called by users.
         """
-
-
 
         self.ax.figure.clear()     # Clear the current figure
-        self.draw(self.plane + self.startPlane,True)
+        self.draw(self.plane,True) # Draw the spot diagram in the plane
         self.ax.axis("equal")
-        xlabel("Plane : {0:6.3f}".format(self.plane))
+        xlabel("Shift : {0:6.3f}".format(self.shift))
+        title("Plane at : {0:s}".format(str(self.plane.getPoint())))
         self.ax.figure.canvas.draw() # Display new fugure
 
         #      Update plane reversing if needed
-        if abs(self.plane) > self.zrange:
+        if abs(self.shift) > self.zrange:
             self.delta = -self.delta
-        self.plane += self.delta
-
+        self.shift += self.delta
+        self.plane.incrementPoint(self.delta)    # Move plane for next call
         #                       Return the plot
         return self.ln,
 
 
 
-    def run(self, plane, zrange, delta = 0.1, frameinterval = 200):
+    def run(self, plane, zrange = 1.0, delta = None, frameinterval = 200):
         """
         The run method
 
-        :param plane: starting plane
-        :param zrange: range of animation
-        :param delta: shift between frames
+        :param plane: starting plane for animation.
+        :typoe plane: OpticalPlane
+        :param zrange: range of animation +/- along z axis (Defalt = 1.0)
+        :type zrange: float
+        :param delta: shift between frames (Default = zrange / 10)
+        :type delta: float or None
         :param interval: time interval in msecs
+        :type intreval: int
         """
-        self.startPlane = plane
+        self.plane = plane
         self.zrange = zrange
+        if delta == None:
+            delta = abs(zrange)/10
         self.delta = delta
-        self.plane = 0.0
+
+        self.shift = 0.0           # The current shift
 
         # Call the animation
-        anim = FuncAnimation(self.fig, self.animate,repeat = True, \
+        anim = FuncAnimation(self.fig, self.__animate__,repeat = True, \
                              interval = frameinterval, blit = True)
 
 
