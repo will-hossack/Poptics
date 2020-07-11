@@ -1095,7 +1095,7 @@ class LongPassFilter(OpticalFilter):
     :param width: the width of the cut off region to 10% value
     :param transmission: the transmission at long wavelength
     """
-    def __init__(self,cutoff,width,transmission = 1.0):
+    def __init__(self,cutoff,width = 0.003,transmission = 1.0):
         OpticalFilter.__init__(self,transmission)
         self.cutoff = cutoff
         self.alpha = math.tan(0.4*math.pi)/(0.5*width)
@@ -1109,19 +1109,25 @@ class LongPassFilter(OpticalFilter):
 
 
 class ShortPassFilter(OpticalFilter):
-     """ Class to represent a short pass filter.
+    """ Class to represent a short pass filter.
 
      :param cutoff: the cut-off wavelength
      :param width: the width of the cut off region to 10% value
      :param transmission: the transmission at long wavelength
      """
 
-     def __init__(self,cutoff,width,transmission = 1.0):
+    def __init__(self,cutoff,width = 0.003,transmission = 1.0):
         OpticalFilter.__init__(self,transmission)
         self.cutoff = cutoff
         self.alpha = math.tan(0.4*math.pi)/(0.5*width)
 
-     def __getNewValue__(self,wavelength):
+    def setCutOff(self,cutoff):
+        self.cutoff = cutoff
+        return self
+
+
+
+    def __getNewValue__(self,wavelength):
         """
         Get the new value
         """
@@ -1131,13 +1137,13 @@ class ShortPassFilter(OpticalFilter):
 class BandPassFilter(OpticalFilter):
      """ Class to represent a band pass filter.
 
-     :param lowcutoff: the low cut-off wavelength
-     :param highcutoff: the highcutoff
+     :param shortcutoff: the low cut-off wavelength
+     :param longcutoff: the highcutoff
      :param width: the width of the cut off region to 10% value
      :param transmission: the transmission at long wavelength
      """
 
-     def __init__(self,shortcutoff,longcutoff,width,transmission = 1.0):
+     def __init__(self,longcutoff,shortcutoff,width,transmission = 1.0):
         OpticalFilter.__init__(self,transmission)
         self.shortcutoff = shortcutoff
         self.longcutoff = longcutoff
