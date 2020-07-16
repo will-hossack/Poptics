@@ -9,26 +9,28 @@ import math
 
 
 class PhotoCathode(OpticalFilter):
-    """ Class to represen the photocathone as a short pass filter.
+    """ Class to represent the photocathone as a short pass filter
+        with a sharp cutoff at wavelength set by the voltage.
 
-    :param width: the width of the cut off region to 10% value
+    :param workfunction: workfunction voltage of the device
+    :param width: with od cutoff
     :param transmission: the transmission at long wavelength
     """
-    def __init__(self,workfunction,width = 0.03,transmission = 1.0):
+    def __init__(self,workfunction = 1.6,width = 0.03,transmission = 1.0):
         OpticalFilter.__init__(self,transmission)
         self.workfunction = workfunction
         self.alpha = math.tan(0.4*math.pi)/(0.5*width)
         self.setVoltage()
 
-    def setVoltage(self,volt = 3.0):
+    def setVoltage(self,volt = 0.8):
         """
         Method to set the inverse bias voltage on the photocathode
         taking into account the workfunction.
 
-        :param volt: the voltage (Default = 0.0)
+        :param volt: the voltage (Default = 3.0)
         :type volt: float
         """
-        self.cutoff = 1.237/(volt - self.workfunction)
+        self.cutoff = 1.237/(volt + self.workfunction)
         return self
 
 
@@ -36,11 +38,15 @@ class PhotoCathode(OpticalFilter):
         """
         Get the new value
         """
-        if wavelength > self.cutoff:
-            return 0.0
-        else:
-            dw = self.cutoff - wavelength
-            return 2.0*self.transmission*(math.atan(self.alpha*dw))/math.pi
+
+        dw = self.cutoff - wavelength
+        return self.transmission*(math.atan(self.alpha*dw) + math.pi/2)/math.pi
+
+        #if wavelength > self.cutoff:
+        #    return 0.0
+        #else:
+        #    dw = self.cutoff - wavelength
+        #    return 2.0*self.transmission*(math.atan(self.alpha*dw))/math.pi
 
 class PhotoTube(WaveLength):
     """

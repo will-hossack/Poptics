@@ -19,13 +19,14 @@ import numpy as np
 
 def main():
 
+
     spectrum = PlanckSpectrum(3500)
     fw = tio.getFloat("Filter cutoff",0.5)
-    vl = tio.getFloat("Bias Voltage start",2.0)
-    vh = tio.getFloat("Bias Voltage end",vl + 4.0)
+    vl = tio.getFloat("Bias Voltage start",0.3)
+    vh = tio.getFloat("Bias Voltage end",1.5)
     filter = LongPassFilter(fw)
     spectrum.addFilter(filter)
-    photo = PhotoTube(0.65)
+    photo = PhotoTube(1.6)
     photo.setSpectrum(spectrum)
     photo.setVoltage((vh + vl)/2)
     plt.subplot(2,2,1)
