@@ -15,7 +15,7 @@ def parseAngle(theta = 0.0):
     """
     if isinstance(theta,float) or isinstance(theta,int):
         return float(theta)
-    elif(theta,str):
+    elif isinstance(theta,str):
         if theta.startswith("h"):  # Horizontal
             return 0.0
         if theta.startswith("v"):  # Vertical
@@ -29,11 +29,11 @@ def parseAngle(theta = 0.0):
 
 class JonesVector(Ray):
     """
-    JonesVector to hold polarised state of light
+    JonesVector to hold polarised state of light as two complex components.
 
     :param x: x complex component of jones vector (defaults to 1.0)
     :type x: complex
-    :param y: component of jones vector (defults to 0.0)
+    :param y: y component of jones vector (defults to 0.0)
     :type y: complex
     :param wavelength: Wavelength Jones vector (defaults to Default)
 
@@ -42,7 +42,6 @@ class JonesVector(Ray):
     def __init__(self,x = 1.0 ,y = 0.0 ,wavelength = getDefaultWavelength()):
         """
         Constructor to create a JonesVector
-
         """
         if isinstance(x,JonesVector):
             self.__init__(x.x,x.y,x.wavelength)
@@ -58,16 +57,8 @@ class JonesVector(Ray):
         """
         return "({0:s} , {1:s} , {2:7.5f} )".format(str(self.x),\
                                 str(self.y),self.wavelength)
-    #
-    #
-    def __repr__(self):
-        """
-        The repr function with the class name.
-        """
-        return "{0:s} ".format(self.__class__.__name__) + str(self)
 
 
-    #
     def copy(self):
         """
         Method to make copy and a new JonesVector being a copy of the current.
@@ -237,8 +228,8 @@ class JonesVector(Ray):
     def throughPolariser(self,theta):
 
         """
-        Method to put the current JonesVector through an idea  Linear Polarsier at specfied angle and
-        get the output intensity.
+        Method to put the current JonesVector through an ideal
+        Linear Polarsier at specfied angle and get the output intensity.
 
         :param theta: angle of polarised from y-axis
         :type theta: float
@@ -253,10 +244,10 @@ class JonesVector(Ray):
 
     def polarPlot(self,points = 200):
         """
-        Method to generate polar plot through an indeal rotated linear polarsied polariser.
+        Method to generate polar plot through an ideal rotated linear
+        polarsier. The colour of the plot is caculated from the wavelenegth
+        of tghe beam from :func: WavelengthColour
 
-        :param key: plot key to plt.plot, (Default = "r")
-        :type key: str
         :param points: number of points (Default = 200)
         :type points: int
         """
@@ -690,7 +681,7 @@ class JonesMatrixSystem(list):
         list.__init__(self)
         if isinstance(ms,list) :        # Supplied a list
             for m in ms:
-                self.append(d)          # Appled each
+                self.append(m)          # Appled each
 
         if ms != None:                # Append single supplied Group
             self.append(ms)

@@ -1143,7 +1143,7 @@ class BandPassFilter(OpticalFilter):
      :param transmission: the transmission at long wavelength
      """
 
-     def __init__(self,longcutoff,shortcutoff,width,transmission = 1.0):
+     def __init__(self,longcutoff,shortcutoff,width=0.003,transmission = 1.0):
         OpticalFilter.__init__(self,transmission)
         self.shortcutoff = shortcutoff
         self.longcutoff = longcutoff
@@ -1160,8 +1160,29 @@ class BandPassFilter(OpticalFilter):
             (math.atan(self.alpha*wl) + math.pi/2)/math.pi**2
 
 
+class NotchFilter(OpticalFilter):
+    """ Class to represent a Notch filter with a narrow band
 
+        :param notch: centre of notch wavelength
+        :param delta: width of notch (default = 0.01)
+        :param width: width of cut-off region to 10% of peak
+        :param transmission: maximum transmission (Default = 1.0)
+    """
+    def __init__(self,notch,delta = 0.01,width = 0.003, transmission = 1.0):
+        OpticalFilter.__init__(self,transmission)
+        self.shortcutoff = notch + delta/2
+        self.longcutoff = notch - delta/2
+        self.alpha = math.tan(0.4*math.pi)/(0.5*width)
 
+    def __getNewValue__(self,wavelength):
+        """
+        Get the new value
+        """
+        ws = self.shortcutoff - wavelength
+        wl = wavelength - self.longcutoff
+        n =(math.atan(self.alpha*ws) + math.pi/2)*\
+            (math.atan(self.alpha*wl) + math.pi/2)/math.pi**2
+        return self.transmission*(1.0 - n)
 
 class FilterStack(list):
     """

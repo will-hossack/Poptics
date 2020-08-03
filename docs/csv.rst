@@ -3,13 +3,13 @@ CSV File Read and Write
 =======================
 
 There are two simple CSV file functions to read and write simple CSV of float data direct
-to and from numpy.ndarray.
+to and from Numpy double arrays.
 
 These are:
 
 .. autofunction:: poptics.csvfile.readCSV
 
-This funtion will also ignore comment lines starting with \# and also blank lines, but there is no
+This funtion will ignore comment lines starting with \# and also blank lines, but there is no
 other processing. The actual reads and done with the standard csv.read() function.
 
 .. autofunction:: poptics.csvfile.writeCSV
@@ -20,18 +20,18 @@ by default action of csv.write()
 Examples
 ========
 
-If a CSV file contains two columes of floats values with a comma spearator these two columns can be read to
-two numpy ndaray by:
+If a CSV file contains two columns of floats values with a comma spearator these two columns can be read to
+two Numpty ndarrays with.
 
 .. code-block:: python
 
      from poptics.csvfile import readCSV
      from poptions.tio import getFilename
-     # Get filename
+     # Get filename with csv default extension
      fn = getFilename("CSV file","csv")
      xData , yData = readCSV(fn)
 
-While is the CSV file has three columns the first and third columum, with the second ignored,
+While if the CSV file has three columns the first and third columum, with the second ignored,
 can be read with the following code:
 
 .. code-block:: python

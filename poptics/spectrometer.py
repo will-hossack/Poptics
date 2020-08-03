@@ -383,8 +383,8 @@ class PrismSpectrometer(Prism):
         if isinstance(intensities,(float,int)):    # If single value, make np array
             intensities = np.full(wavelengths.size,intensities)
 
-        pt = self.getInputPoint()                 # Input point on prism
-        ang = self.minDeviation()/2               # Angle of imput beam
+        pt = self.getInputPoint()                             # Input point on prism
+        ang = Unit3d().parseAngle(self.minDeviation()/2)      # Direction  of imput beam
         pencil = RayPencil().addRays(pt,ang,wavelengths,intensities) # Make pencil of rays
         pencil *= self                    # Put through prism
 

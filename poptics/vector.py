@@ -1354,6 +1354,8 @@ class Unit3d(Vector3d):
 
         :param args: brtween 1 and 3 args.
 
+        Note: this method is rather compuationally slow, it is design to
+        parsse command inputs rather than bening used in calcualtions.
         """
 
         if len(args) == 0:       # No args sent

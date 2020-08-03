@@ -2,12 +2,12 @@
 Jones Methods
 ==============
 
-Set of classes to implements Jones calculus for fully polarised light
+Set of classes to implements Jones calculus for fully polarised light.
 
 JonesVector class
 =================
 
-Class to implement the basic Jones Vector
+Class to implement the basic Jones Vector that hole the state of the beam as two othorogal complex components.
 
 .. autoclass:: poptics.jones.JonesVector
    :members:

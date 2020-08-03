@@ -152,6 +152,20 @@ class Surface(object):
 
         return self
 
+    def incrementSurface(self,delta):
+        """
+        Get a new surface where the reference point is incremented a distance along
+        the optical (z-axis).
+
+        :param delta: The distance incremented along the optical axis
+        :type delta: float
+        :return: new OpticalPlane
+
+        """
+        s = self.copy()
+        s.incrementPoint(delta)
+        return s
+
 
     def scale(self,a):
         """
@@ -391,6 +405,8 @@ class OpticalPlane(FlatSurface):
         """
         p = pos - self.getPoint()
         return Vector2d(p.x,p.y)
+
+
 
 
     def getSourcePoint(self, x, y = None, intensity = 1.0):

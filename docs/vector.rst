@@ -3,30 +3,28 @@ Vector Classes
 ==============
 
 These classes handle two and three dimensional vectors with many supporting
-methods to simplfy their use. These classes are used throughout the poptics
+methods to simplfy their use. These classes are used throughout the Poptics
 package but can also be used as stand alone classes for other applications.
 
 These vector classes are all interally hand coded and do not use
 Numpy which significantly imporve efficiency.
 
 
-
 Vector2d Class
 ==============
 
 Class for two dimensional vectors. This class is typically used to describe
-point in planes.
+points in planes.
 
 .. autoclass:: poptics.vector.Vector2d
    :members:
-
 
 
 Vector3d Class
 ==============
 
 Class for three dimensional vectors. This is main class used in specifiy
-rays and component positions in the poptics package. 
+rays and component positions in the poptics package.  
 
 .. autoclass:: poptics.vector.Vector3d
    :members:
@@ -47,7 +45,7 @@ components set to "nan".
 Angle Class
 ===========
 
- Class to implement a unit vector using theta/psi angles. It is not used for ant internal
+ Class to implement a unit vector using theta/psi angles. It is not used for any internal
  calcualtions but is a humanly understandable alternative for secifyinfg
  ray directions and surface normals. Note both angle are in radians.
 
